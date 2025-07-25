@@ -42,14 +42,14 @@ const contentSchema = z.union([
   z.object({
     type: z.literal("code"),
     value: z.string().min(1, "Value is required"),
-    language: z.enum(["python"]),
-    solution: z.array(z.string()).min(1, "At least one solution is required"),
+    language: z.enum(["python"]).optional().default("python"),
+    solution: z.array(z.string()).optional().default([]),
   }),
   z.object({
     type: z.literal("mcq"),
     value: z.string().min(1, "Value is required"),
-    choices: z.array(z.string()).min(1, "At least one choice is required"),
-    answer: z.number().min(0),
+    choices: z.array(z.string()).optional().default([]),
+    answer: z.number().optional().default(0),
   }),
 ]);
 
@@ -68,6 +68,7 @@ export default function CreateDrillPage() {
   const router = useRouter();
   const [aiPrompt, setAiPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -86,16 +87,23 @@ export default function CreateDrillPage() {
 
   const handleAiGenerate = async () => {
     setIsGenerating(true);
+    console.log('Starting AI generation with prompt:', aiPrompt);
     try {
         const result = await generateDrillAction(aiPrompt);
+        console.log('AI generation result:', result);
         if (result.error) {
             throw new Error(result.error);
         }
         form.reset(result);
+        toast({
+            title: "Success",
+            description: "Drill generated successfully!",
+        });
     } catch (error) {
+        console.error('AI generation error:', error);
         toast({
             title: "Error",
-            description: "Failed to generate drill from prompt.",
+            description: `Failed to generate drill: ${error.message}`,
             variant: "destructive",
         });
     }
@@ -103,16 +111,23 @@ export default function CreateDrillPage() {
   }
 
   async function onSubmit(values: FormValues) {
+    alert('Form submission triggered!'); // Simple test
+    setIsSubmitting(true);
+    console.log('Form submission started with values:', values);
     const user = auth.currentUser;
 
     if (!user) {
+      console.log('No user logged in');
       toast({
         title: "Error",
         description: "You must be logged in to create a drill.",
         variant: "destructive",
       });
+      setIsSubmitting(false);
       return;
     }
+
+    console.log('User authenticated:', user.uid);
 
     try {
       const drillContent = values.content.map(content => {
@@ -125,14 +140,19 @@ export default function CreateDrillPage() {
           return content;
       });
 
-      await addDoc(collection(db, "drills"), {
+      console.log('Processed drill content:', drillContent);
+
+      const docRef = await addDoc(collection(db, "drills"), {
         title: values.title,
         concept: values.concept,
         difficulty: values.difficulty,
         description: values.description,
         userId: user.uid,
         drill_content: drillContent,
+        createdAt: new Date(),
       });
+
+      console.log('Drill saved with ID:', docRef.id);
 
       toast({
         title: "Success",
@@ -140,11 +160,14 @@ export default function CreateDrillPage() {
       });
       router.push('/drills');
     } catch (error) {
+      console.error('Error creating drill:', error);
       toast({
         title: "Error",
-        description: "Failed to create drill.",
+        description: `Failed to create drill: ${error.message}`,
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -296,7 +319,36 @@ export default function CreateDrillPage() {
           </Button>
         </div>
 
-        <Button type="submit">Create Drill</Button>
+        <div className="flex gap-2">
+          <Button 
+            type="submit" 
+            disabled={isSubmitting}
+            onClick={() => {
+              console.log('Button clicked!');
+              console.log('Form state:', form.formState);
+              console.log('Form errors:', form.formState.errors);
+              console.log('Detailed content errors:', form.formState.errors.content);
+              console.log('Form values:', form.getValues());
+              console.log('Content array:', form.getValues().content);
+            }}
+          >
+            {isSubmitting ? <LoaderCircle className="h-4 w-4 animate-spin mr-2" /> : null}
+            {isSubmitting ? "Creating..." : "Create Drill"}
+          </Button>
+          
+          <Button 
+            type="button"
+            variant="outline"
+            onClick={() => {
+              console.log('Force submit clicked!');
+              const values = form.getValues();
+              onSubmit(values);
+            }}
+            disabled={isSubmitting}
+          >
+            Force Submit (Debug)
+          </Button>
+        </div>
       </form>
     </Form>
     </div>

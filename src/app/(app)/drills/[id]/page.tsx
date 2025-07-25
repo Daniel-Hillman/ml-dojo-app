@@ -12,7 +12,7 @@ import { Lightbulb, LoaderCircle, CheckCircle, XCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Drill, DrillContent } from '../page';
 import { db, auth } from '@/lib/firebase/client';
-import { doc, getDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
 import { vscodeDark } from '@uiw/codemirror-theme-vscode';
@@ -20,7 +20,7 @@ import { notFound } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { debounce } from 'lodash';
 import { calculateNextReviewDate } from '@/lib/srs';
-import { generateDynamicDrill } from '@/ai/flows/generate-dynamic-drill';
+// Removed generateDynamicDrill import to avoid OpenTelemetry browser issues
 import { useAuthState } from 'react-firebase-hooks/auth';
 
 type WorkoutMode = 'Crawl' | 'Walk' | 'Run';
@@ -273,9 +273,7 @@ export default function DrillPage({ params }: { params: { id: string } }) {
   const codeContext = displayDrill.drill_content
     ?.filter((c) => c.type === 'code')
     .map((c) => c.value)
-    .join('
-
-') || "";
+    .join('\n\n') || "";
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-4 sm:p-6 lg:p-8">

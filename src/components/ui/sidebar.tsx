@@ -16,6 +16,7 @@ export function Sidebar() {
     { href: '/drills', icon: FlaskConical, label: 'Practice Drills' },
     { href: '/drills/create', icon: PlusSquare, label: 'Custom Drills' },
     { href: '/notes', icon: Notebook, label: 'Notes' },
+    { href: '/test-genkit', icon: Bot, label: 'Test AI' },
   ];
 
   const footerLinks = [

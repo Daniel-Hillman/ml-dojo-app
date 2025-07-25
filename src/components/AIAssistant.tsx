@@ -4,10 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { generateClarification } from "@/ai/flows/generate-clarification";
-import { generateHint } from "@/ai/flows/generate-hint";
-import { generateCodeCompletion } from "@/ai/flows/generate-code-completion";
-import { generateDeeperExplanation } from "@/ai/flows/generate-deeper-explanation";
+import { getHint, getClarification, getCodeCompletion } from "@/lib/actions";
 import { LoaderCircle } from "lucide-react";
 
 type Message = {
@@ -61,33 +58,30 @@ export function AIAssistant({
     try {
       let response;
       if (flow === "clarification") {
-        response = await generateClarification({
+        response = await getClarification({
           concept: concept,
           userQuestion: input,
         });
       } else if (flow === "hint") {
-        response = await generateHint({
+        response = await getHint({
           drillContext: drillContext,
           userQuery: userMessageContent,
         });
       } else if (flow === "code") {
-        response = await generateCodeCompletion({
+        response = await getCodeCompletion({
           codeContext: codeContext,
           language: "python",
         });
       } else {
-        response = await generateDeeperExplanation({
-            concept,
-            drillContext,
+        // For deeper explanation, use clarification for now
+        response = await getClarification({
+          concept: concept,
+          userQuestion: "Can you explain this concept in more detail?",
         });
       }
       const assistantMessage: Message = {
         role: "assistant",
-        content:
-          (response as any).clarification ||
-          (response as any).hint ||
-          (response as any).completion ||
-            (response as any).explanation,
+        content: response,
       };
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
