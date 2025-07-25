@@ -1,116 +1,193 @@
-'use client';
+"use client";
 
-import { useState, type FormEvent } from 'react';
-import { Bot, Lightbulb, HelpCircle, Code, LoaderCircle, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { getHint, getClarification, getCodeCompletion } from '@/lib/actions';
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { generateClarification } from "@/ai/flows/generate-clarification";
+import { generateHint } from "@/ai/flows/generate-hint";
+import { generateCodeCompletion } from "@/ai/flows/generate-code-completion";
+import { generateDeeperExplanation } from "@/ai/flows/generate-deeper-explanation";
+import { LoaderCircle } from "lucide-react";
 
-type AssistantTab = 'hint' | 'clarify' | 'complete';
+type Message = {
+  role: "user" | "assistant";
+  content: string;
+  isProactive?: boolean;
+};
 
-export default function AIAssistant({ drillContext }: { drillContext: string }) {
-  const [activeTab, setActiveTab] = useState<AssistantTab>('hint');
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState('');
-  const [query, setQuery] = useState('');
+export function AIAssistant({
+  concept,
+  drillContext,
+  codeContext,
+  proactiveHint,
+  drillCompleted,
+}: {
+  concept: string;
+  drillContext: string;
+  codeContext: string;
+  proactiveHint: string | null;
+  drillCompleted: boolean;
+}) {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [proactiveHintVisible, setProactiveHintVisible] = useState(false);
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    setResult('');
-    
+  useEffect(() => {
+    if (proactiveHint) {
+      setMessages((prev) => [...prev, { role: 'assistant', content: proactiveHint, isProactive: true }]);
+      setProactiveHintVisible(true);
+    }
+  }, [proactiveHint]);
+
+  const handleSendMessage = async (flow: "clarification" | "hint" | "code" | "deeperExplanation", content?: string) => {
+    let userMessageContent = content || input;
+    if (flow === "hint" && !content) {
+      userMessageContent = "Can I have a hint?";
+    } else if (flow === "code") {
+      userMessageContent = "Can you help me complete this code?";
+    } else if (flow === "deeperExplanation") {
+        userMessageContent = "Can you explain this concept in more detail?";
+    }
+
+    if (userMessageContent.trim() === "" && flow === "clarification") return;
+
+    const userMessage: Message = { role: "user", content: userMessageContent };
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setIsLoading(true);
+
     try {
       let response;
-      if (activeTab === 'hint') {
-        response = await getHint({ drillContext, userQuery: query });
-      } else if (activeTab === 'clarify') {
-        response = await getClarification({ concept: drillContext, userQuestion: query });
+      if (flow === "clarification") {
+        response = await generateClarification({
+          concept: concept,
+          userQuestion: input,
+        });
+      } else if (flow === "hint") {
+        response = await generateHint({
+          drillContext: drillContext,
+          userQuery: userMessageContent,
+        });
+      } else if (flow === "code") {
+        response = await generateCodeCompletion({
+          codeContext: codeContext,
+          language: "python",
+        });
       } else {
-        response = await getCodeCompletion({ codeContext: query, language: 'python' });
+        response = await generateDeeperExplanation({
+            concept,
+            drillContext,
+        });
       }
-      setResult(response);
+      const assistantMessage: Message = {
+        role: "assistant",
+        content:
+          (response as any).clarification ||
+          (response as any).hint ||
+          (response as any).completion ||
+            (response as any).explanation,
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
-      console.error('AI Assistant Error:', error);
-      setResult('An error occurred. Please try again.');
+      console.error(`Error generating ${flow}:`, error);
+      const errorMessage: Message = {
+        role: "assistant",
+        content: `Sorry, I couldn't generate a ${flow} at this time.`,
+      };
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const getLabelText = () => {
-    switch (activeTab) {
-      case 'hint': return 'What do you need a hint for?';
-      case 'clarify': return 'What concept needs clarification?';
-      case 'complete': return 'Enter your code snippet to complete:';
-      default: return '';
-    }
-  };
-  
-  const getButtonText = () => {
-     switch (activeTab) {
-      case 'hint': return 'Get Hint';
-      case 'clarify': return 'Clarify Concept';
-      case 'complete': return 'Complete Code';
-      default: return '';
+  const handleProactiveHintResponse = (response: 'yes' | 'no') => {
+    setProactiveHintVisible(false);
+    if(response === 'yes'){
+        handleSendMessage('hint', 'Yes, please');
     }
   }
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button
-          className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-2xl"
-          size="icon"
-        >
-          <Bot className="h-8 w-8" />
-          <span className="sr-only">Open AI Assistant</span>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[625px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-2xl font-headline">
-            <Sparkles className="text-accent" />
-            AI Assistant
-          </DialogTitle>
-        </DialogHeader>
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as AssistantTab)} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="hint"><Lightbulb className="mr-2 h-4 w-4" />Hint</TabsTrigger>
-            <TabsTrigger value="clarify"><HelpCircle className="mr-2 h-4 w-4" />Clarify</TabsTrigger>
-            <TabsTrigger value="complete"><Code className="mr-2 h-4 w-4" />Complete</TabsTrigger>
-          </TabsList>
-          <div className="pt-4">
-            <form onSubmit={handleSubmit} className="space-y-4">
-               <div>
-                  <Label htmlFor="ai-query" className="text-md">{getLabelText()}</Label>
-                  <Textarea 
-                    id="ai-query" 
-                    value={query} 
-                    onChange={(e) => setQuery(e.target.value)} 
-                    placeholder="Type here..." 
-                    className="mt-2"
-                    rows={activeTab === 'complete' ? 6 : 3}
-                  />
-               </div>
-              <Button type="submit" disabled={loading} className="w-full">
-                {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                {loading ? 'Generating...' : getButtonText()}
-              </Button>
-            </form>
-            {result && (
-              <div className="mt-6 p-4 bg-secondary rounded-lg border">
-                <h4 className="font-semibold mb-2">Assistant's Response:</h4>
-                <div className="prose prose-sm max-w-none text-secondary-foreground font-code whitespace-pre-wrap">
-                  {result}
-                </div>
+    <div className="flex flex-col h-full border rounded-md">
+      <div className="p-4 border-b">
+        <h3 className="font-semibold text-lg">AI Assistant</h3>
+        <p className="text-sm text-muted-foreground">
+          Ask for hints, clarifications, or code explanations.
+        </p>
+      </div>
+      <ScrollArea className="flex-grow p-4">
+        <div className="space-y-4">
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`flex flex-col ${
+                message.role === "user" ? "items-end" : "items-start"
+              }`}
+            >
+              <div
+                className={`p-2 rounded-lg ${
+                  message.role === "user"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted"
+                }`}
+              >
+                {message.content}
               </div>
-            )}
-          </div>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
+              {message.isProactive && proactiveHintVisible && (
+                <div className="flex space-x-2 mt-2">
+                    <Button onClick={() => handleProactiveHintResponse('yes')} size="sm">Yes, please</Button>
+                    <Button onClick={() => handleProactiveHintResponse('no')} size="sm" variant="outline">No, thanks</Button>
+                </div>
+              )}
+            </div>
+          ))}
+          {isLoading && (
+            <div className="flex justify-center">
+              <LoaderCircle className="h-6 w-6 animate-spin" />
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+      <div className="p-4 border-t">
+        {drillCompleted && (
+            <Button onClick={() => handleSendMessage('deeperExplanation')} className="w-full mb-2">Go Deeper</Button>
+        )}
+        <div className="flex space-x-2">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask a question..."
+            onKeyDown={(e) =>
+              e.key === "Enter" && handleSendMessage("clarification")
+            }
+            disabled={isLoading}
+          />
+          <Button
+            onClick={() => handleSendMessage("clarification")}
+            disabled={isLoading}
+          >
+            Clarify
+          </Button>
+        </div>
+        <div className="flex space-x-2 mt-2">
+          <Button
+            onClick={() => handleSendMessage("hint")}
+            disabled={isLoading}
+            variant="outline"
+          >
+            Hint
+          </Button>
+          <Button
+            onClick={() => handleSendMessage("code")}
+            disabled={isLoading}
+            variant="outline"
+          >
+            Complete Code
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }

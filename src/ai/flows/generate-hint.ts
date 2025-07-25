@@ -41,7 +41,7 @@ const generateHintPrompt = ai.definePrompt({
 
 const generateHintFlow = ai.defineFlow(
   {
-    name: 'generateHintFlow',
+    name: 'generateHint',
     inputSchema: GenerateHintInputSchema,
     outputSchema: GenerateHintOutputSchema,
   },

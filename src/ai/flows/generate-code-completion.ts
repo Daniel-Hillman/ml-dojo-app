@@ -43,7 +43,7 @@ const prompt = ai.definePrompt({
 
 const generateCodeCompletionFlow = ai.defineFlow(
   {
-    name: 'generateCodeCompletionFlow',
+    name: 'generateCodeCompletion',
     inputSchema: GenerateCodeCompletionInputSchema,
     outputSchema: GenerateCodeCompletionOutputSchema,
   },

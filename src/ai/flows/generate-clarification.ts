@@ -40,7 +40,7 @@ Clarification:`, // Removed example clarification
 
 const generateClarificationFlow = ai.defineFlow(
   {
-    name: 'generateClarificationFlow',
+    name: 'generateClarification',
     inputSchema: GenerateClarificationInputSchema,
     outputSchema: GenerateClarificationOutputSchema,
   },

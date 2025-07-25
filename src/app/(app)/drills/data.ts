@@ -6,6 +6,7 @@ export type DrillContent = {
   blanks?: number;
   choices?: string[];
   answer?: number;
+  solution?: string[];
 };
 
 export type Drill = {
@@ -44,18 +45,19 @@ y_mean = np.mean(y)
 
 # Calculate the terms needed for the numerator and denominator of beta
 numerator = np.sum((X - x_mean) * (y - y_mean))
-denominator = ____( (X - x_mean)**2 )
+denominator = np.sum( (X - x_mean)**2 )
 
 # Calculate beta (slope)
 beta = numerator / denominator
 
 # Calculate alpha (intercept)
-alpha = y_mean - (____ * x_mean)
+alpha = y_mean - (beta * x_mean)
 
 print(f"Regression Line: y = {alpha:.2f} + {beta:.2f}x")
 `
         ,
         blanks: 2,
+        solution: ['np.sum', 'beta'],
       },
       {
         type: 'mcq',
@@ -99,7 +101,7 @@ X = np.array([[1, 2], [1, 4], [1, 0],
 
 # Initialize KMeans
 # We are looking for 2 clusters
-kmeans = ____(n_clusters=____, random_state=0)
+kmeans = KMeans(n_clusters=2, random_state=0)
 
 # Fit the model to the data
 kmeans.fit(X)
@@ -112,6 +114,7 @@ print("Cluster centers:", kmeans.cluster_centers_)
 `
         ,
         blanks: 2,
+        solution: ['KMeans', '2'],
       },
     ],
   },
@@ -140,13 +143,13 @@ X = iris.data
 y = iris.target
 
 # Split dataset into training set and test set
-X_train, X_test, y_train, y_test = train_test_split(____, ____, test_size=0.3, random_state=1)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1)
 
 # Create Decision Tree classifer object
 clf = DecisionTreeClassifier()
 
 # Train Decision Tree Classifer
-clf = clf.fit(____,____)
+clf = clf.fit(X_train,y_train)
 
 # Predict the response for test dataset
 y_pred = clf.predict(X_test)
@@ -156,6 +159,7 @@ print("Accuracy:", accuracy_score(y_test, y_pred))
 `
         ,
         blanks: 4,
+        solution: ['X', 'y', 'X_train', 'y_train'],
       }
     ],
   },
