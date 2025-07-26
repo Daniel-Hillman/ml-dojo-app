@@ -238,73 +238,70 @@ export async function generateDynamicDrill(input: z.infer<typeof GenerateDynamic
     let prompt;
     switch (input.workoutMode) {
       case "Crawl":
-        prompt = `You are an expert AI programming tutor specializing in adaptive learning. Transform this drill content for BEGINNER learners who need maximum guidance.
+        prompt = `You are an expert AI programming tutor. Transform this drill for BEGINNER learners who need to focus on the most essential concepts only.
 
 ORIGINAL DRILL CONTENT:
 ${JSON.stringify(originalContent, null, 2)}
 
-CRAWL MODE TRANSFORMATION RULES:
+CRAWL MODE TRANSFORMATION RULES (Like Mimo/Khan Academy for beginners):
 
 For CODE blocks:
-1. MULTIPLY blanks: If original has 2 blanks, create 4-6 smaller blanks
-2. Break down complex expressions into atomic parts:
-   - Original: "for ____ in range(10):" → "for ____ in ____(____):"
-   - Original: "result = x * 2 + 1" → "result = ____ ____ ____ ____ ____"
-3. Blank out basic syntax elements: operators (+, -, *, /), keywords (if, for, while), simple values
-4. Keep variable names and complex logic visible as hints
-5. Add intermediate steps that were combined in original
-6. Solution array must match the new number of blanks exactly
+1. MINIMIZE blanks: Only blank out the MOST IMPORTANT concepts (1-2 key blanks max)
+2. Focus on core learning objectives:
+   - Variable assignment: blank only the VALUE, keep syntax visible
+   - Function calls: blank only the FUNCTION NAME, keep parameters visible
+   - Operators: blank only the MAIN OPERATOR, keep operands visible
+3. Keep maximum scaffolding and context visible
+4. Examples:
+   - "name = ____" (blank only the value)
+   - "print(____)" (blank only what to print)
+   - "for i in ____:" (blank only the iterable)
+5. Solution array should have 1-2 simple, focused answers
 
 For MCQ blocks:
-1. Simplify language and use more basic terminology
-2. Make correct answers more obvious
-3. Add clearly wrong "distractor" answers
-4. Focus on fundamental concepts rather than edge cases
-
-For THEORY blocks:
-1. Keep unchanged - theory provides context
+1. Make questions very straightforward
+2. Focus on basic syntax and fundamental concepts
+3. Provide obvious correct answers
 
 CRITICAL REQUIREMENTS:
-- Maintain exact JSON structure with same field names
-- Ensure solution arrays have exactly the right number of elements for new blanks
-- Keep the same learning objectives but make them more accessible
-- All blanks must be fillable with simple, short answers
+- FEWER blanks than original (focus on essentials only)
+- Simple, single-concept solutions
+- Maximum guidance and scaffolding
 
 Return ONLY the JSON array of modified drill content. No explanations, no markdown formatting.`;
         break;
         
       case "Run":
-        prompt = `You are an expert AI programming tutor specializing in advanced challenges. Transform this drill content for EXPERT learners who want maximum difficulty.
+        prompt = `You are an expert AI programming tutor. Transform this drill for EXPERT learners who want maximum challenge.
 
 ORIGINAL DRILL CONTENT:
 ${JSON.stringify(originalContent, null, 2)}
 
-RUN MODE TRANSFORMATION RULES:
+RUN MODE TRANSFORMATION RULES (Like advanced coding challenges):
 
 For CODE blocks:
-1. CONSOLIDATE blanks: Combine 2-3 small blanks into 1 large conceptual blank
-2. Create comprehensive blanks that require deep understanding:
-   - Original: "for i in ____:" → "____:"  (entire loop structure)
-   - Original: "if x > 0:" → "____:" (entire conditional logic)
-3. Blank out entire expressions, function calls, or algorithm implementations
-4. Remove scaffolding and intermediate steps - make users think through the complete solution
-5. Focus on algorithmic thinking rather than syntax
-6. Solution array must contain complete expressions/statements for each blank
+1. MAXIMIZE blanks: Blank out MOST of the code (80-90% should be blanks)
+2. Create comprehensive challenges:
+   - Blank entire variable assignments: "____"
+   - Blank complete function calls: "____"
+   - Blank entire expressions: "____"
+   - Blank control structures: "____"
+3. Minimal scaffolding - let experts figure it out
+4. Examples:
+   - "____ = ____" (blank both variable and value)
+   - "for ____ in ____:" (blank iterator and iterable)
+   - "print(____)" becomes "____" (blank entire statement)
+5. Solution array should contain complete code segments
 
 For MCQ blocks:
-1. Add subtle edge cases and tricky scenarios
-2. Include multiple partially-correct answers
-3. Test deep conceptual understanding, not just memorization
-4. Add questions about performance, best practices, or alternative approaches
-
-For THEORY blocks:
-1. Keep unchanged - theory provides context
+1. Add complex scenarios and edge cases
+2. Test deep understanding and best practices
+3. Include tricky, advanced concepts
 
 CRITICAL REQUIREMENTS:
-- Maintain exact JSON structure with same field names
-- Solution arrays must contain complete, executable code segments
-- Each blank should test significant conceptual understanding
-- Blanks should require writing substantial code, not just single words
+- MANY MORE blanks than original (maximum challenge)
+- Complex, multi-concept solutions
+- Minimal guidance - test true expertise
 
 Return ONLY the JSON array of modified drill content. No explanations, no markdown formatting.`;
         break;

@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { AIAssistant } from '@/components/AIAssistant';
+import { InteractiveCodeBlock } from '@/components/InteractiveCodeBlock';
 import { Lightbulb, LoaderCircle, CheckCircle, XCircle, Baby, User, Zap } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Drill, DrillContent } from '../page';
@@ -36,6 +37,7 @@ export default function DrillPage({ params }: { params: Promise<{ id: string }> 
   const [mcqAnswers, setMcqAnswers] = useState<Record<string, number>>({});
   const [mcqFeedback, setMcqFeedback] = useState<Record<string, 'correct' | 'incorrect'>>({});
   const [codeFeedback, setCodeFeedback] = useState<Record<string, 'correct' | 'incorrect'>>({});
+  const [codeValidation, setCodeValidation] = useState<Record<string, boolean>>({});
   const [isValidating, setIsValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<'success' | 'error' | null>(null);
   const [startTime, setStartTime] = useState<Date | null>(null);
@@ -133,6 +135,7 @@ export default function DrillPage({ params }: { params: Promise<{ id: string }> 
               setMcqAnswers({});
               setMcqFeedback({});
               setCodeFeedback({});
+              setCodeValidation({});
               setValidationResult(null);
               setAttempts(0); // Reset attempts counter for new mode
             } catch (error) {
@@ -235,10 +238,19 @@ export default function DrillPage({ params }: { params: Promise<{ id: string }> 
     return { parts, blankCount };
   };
 
-  // Enhanced input change handler with better validation
-  const handleInputChange = (contentIndex: number, blankIndex: number, value: string, correctAnswer: string) => {
-    setUserAnswers(prev => ({ ...prev, [`${contentIndex}-${blankIndex}`]: value }));
-    debouncedCodeValidation(contentIndex, blankIndex, value, correctAnswer);
+  // Handle code block answer changes
+  const handleCodeAnswerChange = (contentIndex: number, answers: Record<string, string>) => {
+    // Update user answers with the new code answers
+    const updatedAnswers = { ...userAnswers };
+    Object.entries(answers).forEach(([blankIndex, value]) => {
+      updatedAnswers[`${contentIndex}-${blankIndex}`] = value;
+    });
+    setUserAnswers(updatedAnswers);
+  };
+
+  // Handle code block validation changes
+  const handleCodeValidationChange = (contentIndex: number, isValid: boolean) => {
+    setCodeValidation(prev => ({ ...prev, [contentIndex]: isValid }));
   };
 
 
@@ -262,11 +274,9 @@ export default function DrillPage({ params }: { params: Promise<{ id: string }> 
 
     for (const [contentIndex, content] of (displayDrill.drill_content || []).entries()) {
       if (content.type === 'code') {
-        if (!content.solution) continue;
-        
-        // Check if the overall code validation is correct
-        const overallFeedback = codeFeedback[`${contentIndex}-overall`];
-        if (overallFeedback !== 'correct') {
+        // Check if the interactive code block validation is correct
+        const isCodeValid = codeValidation[contentIndex];
+        if (!isCodeValid) {
           isCorrect = false;
           break;
         }
@@ -321,82 +331,13 @@ export default function DrillPage({ params }: { params: Promise<{ id: string }> 
           </div>
         );
       case 'code':
-        // Simple approach: always show editable code
-        const initialCode = content.value;
-        const currentCode = userAnswers[`${contentIndex}-code`] || initialCode;
-        
         return (
-          <div className="rounded-lg overflow-hidden border border-gray-700">
-            <div className="bg-gray-800 px-4 py-2 text-sm text-gray-300 border-b border-gray-700 flex items-center justify-between">
-              <span>💡 Edit the code directly - replace ____ with your answers</span>
-              {codeFeedback[`${contentIndex}-overall`] === 'correct' && (
-                <div className="flex items-center text-green-400">
-                  <CheckCircle className="mr-1 h-4 w-4" />
-                  Complete!
-                </div>
-              )}
-            </div>
-            <CodeMirror
-              value={currentCode}
-              height="auto"
-              extensions={[python()]}
-              theme={vscodeDark}
-              editable={true}
-              className="w-full"
-              onChange={(value) => {
-                // Store the entire code content
-                setUserAnswers(prev => ({ ...prev, [`${contentIndex}-code`]: value }));
-                
-                // Simple validation: check if all blanks are filled
-                const hasUnfilledBlanks = value.includes('____');
-                const feedback = hasUnfilledBlanks ? 'partial' : 'correct';
-                
-                setCodeFeedback(prev => ({ 
-                  ...prev, 
-                  [`${contentIndex}-overall`]: feedback 
-                }));
-                
-                // Extract individual answers for form submission
-                const originalParts = content.value.split('____');
-                const solutions = content.solution || [];
-                
-                // Simple extraction: split by the original parts
-                let remainingCode = value;
-                for (let i = 0; i < originalParts.length - 1; i++) {
-                  const beforePart = originalParts[i];
-                  const afterPart = originalParts[i + 1] || '';
-                  
-                  // Remove the before part
-                  if (beforePart) {
-                    const beforeIndex = remainingCode.indexOf(beforePart);
-                    if (beforeIndex !== -1) {
-                      remainingCode = remainingCode.substring(beforeIndex + beforePart.length);
-                    }
-                  }
-                  
-                  // Extract the answer
-                  let answer = '';
-                  if (afterPart.trim() === '') {
-                    answer = remainingCode.trim();
-                  } else {
-                    const afterIndex = remainingCode.indexOf(afterPart);
-                    if (afterIndex !== -1) {
-                      answer = remainingCode.substring(0, afterIndex).trim();
-                      remainingCode = remainingCode.substring(afterIndex);
-                    }
-                  }
-                  
-                  // Store the extracted answer
-                  setUserAnswers(prev => ({ 
-                    ...prev, 
-                    [`${contentIndex}-${i}`]: answer 
-                  }));
-                }
-              }}
-              onFocus={() => setStuckOn(`${contentIndex}-code`)}
-              onBlur={() => setStuckOn(null)}
-            />
-          </div>
+          <InteractiveCodeBlock
+            content={content}
+            contentIndex={contentIndex}
+            onAnswerChange={handleCodeAnswerChange}
+            onValidationChange={handleCodeValidationChange}
+          />
         );
       case 'mcq':
         const feedback = mcqFeedback[contentIndex];
@@ -467,9 +408,9 @@ export default function DrillPage({ params }: { params: Promise<{ id: string }> 
                 
                 const getModeTooltip = (mode: WorkoutMode) => {
                   switch (mode) {
-                    case 'Crawl': return 'Easiest - More guidance with smaller blanks';
-                    case 'Walk': return 'Standard - Original difficulty level';
-                    case 'Run': return 'Hardest - Fewer hints, larger challenges';
+                    case 'Crawl': return 'Beginner - Only essential concepts blanked out';
+                    case 'Walk': return 'Intermediate - Fair amount of code to fill in';
+                    case 'Run': return 'Expert - Most code blanked out for maximum challenge';
                   }
                 };
                 
