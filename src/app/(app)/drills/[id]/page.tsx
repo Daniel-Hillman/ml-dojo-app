@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { AIAssistant } from '@/components/AIAssistant';
-import { InteractiveCodeBlock } from '@/components/InteractiveCodeBlock';
+import { ProvenApproach } from '@/components/ProvenApproach';
 import { Lightbulb, LoaderCircle, CheckCircle, XCircle, Baby, User, Zap } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Drill, DrillContent } from '../page';
@@ -16,6 +16,18 @@ import { db, auth } from '@/lib/firebase/client';
 import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
+import { javascript } from '@codemirror/lang-javascript';
+import { html } from '@codemirror/lang-html';
+import { css } from '@codemirror/lang-css';
+import { java } from '@codemirror/lang-java';
+import { cpp } from '@codemirror/lang-cpp';
+import { php } from '@codemirror/lang-php';
+import { rust } from '@codemirror/lang-rust';
+import { go } from '@codemirror/lang-go';
+import { sql } from '@codemirror/lang-sql';
+import { json } from '@codemirror/lang-json';
+import { xml } from '@codemirror/lang-xml';
+import { markdown } from '@codemirror/lang-markdown';
 import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 import { notFound } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -25,6 +37,132 @@ import { generateDynamicDrill } from '@/lib/actions';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
 type WorkoutMode = 'Crawl' | 'Walk' | 'Run';
+
+// Helper function to get CodeMirror language extension
+function getLanguageExtension(language: string) {
+  switch (language?.toLowerCase()) {
+    case 'python':
+    case 'py':
+      return python();
+    case 'javascript':
+    case 'js':
+    case 'jsx':
+      return javascript({ jsx: true });
+    case 'typescript':
+    case 'ts':
+    case 'tsx':
+      return javascript({ typescript: true, jsx: true });
+    case 'html':
+    case 'htm':
+      return html();
+    case 'css':
+      return css();
+    case 'java':
+      return java();
+    case 'cpp':
+    case 'c++':
+    case 'c':
+      return cpp();
+    case 'php':
+      return php();
+    case 'rust':
+    case 'rs':
+      return rust();
+    case 'go':
+      return go();
+    case 'sql':
+      return sql();
+    case 'json':
+      return json();
+    case 'xml':
+      return xml();
+    case 'markdown':
+    case 'md':
+      return markdown();
+    default:
+      return python(); // Default fallback
+  }
+}
+
+// Render content function for different content types
+function renderContent(content: DrillContent, contentIndex: number, props: {
+  onAnswerChange: (contentIndex: number, answers: Record<string, string>) => void;
+  onValidationChange: (contentIndex: number, isValid: boolean) => void;
+  mcqAnswers: Record<string, number>;
+  mcqFeedback: Record<string, 'correct' | 'incorrect'>;
+  onMcqChange: (contentIndex: number, value: string, correctAnswer: number) => void;
+}) {
+  switch (content.type) {
+    case 'theory':
+      return (
+        <div className="prose prose-invert max-w-none">
+          <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+            <h4 className="text-blue-300 font-semibold mb-2 flex items-center">
+              📚 Theory
+            </h4>
+            <p className="text-gray-300 leading-relaxed">{content.value}</p>
+          </div>
+        </div>
+      );
+
+    case 'code':
+      return (
+        <div className="space-y-4">
+          <div className="bg-gray-900/50 border border-gray-600 rounded-lg p-4">
+            <h4 className="text-green-300 font-semibold mb-3 flex items-center">
+              💻 Interactive Code Challenge
+            </h4>
+            <ProvenApproach
+              content={content}
+              contentIndex={contentIndex}
+              onAnswerChange={props.onAnswerChange}
+              onValidationChange={props.onValidationChange}
+            />
+          </div>
+        </div>
+      );
+
+    case 'mcq':
+      return (
+        <div className="space-y-4">
+          <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-4">
+            <h4 className="text-purple-300 font-semibold mb-3 flex items-center">
+              ❓ Multiple Choice Question
+            </h4>
+            <p className="text-gray-300 mb-4">{content.value}</p>
+            <RadioGroup
+              value={props.mcqAnswers[contentIndex]?.toString() || ''}
+              onValueChange={(value) => props.onMcqChange(contentIndex, value, content.answer || 0)}
+            >
+              {(content.choices || []).map((choice, choiceIndex) => (
+                <div key={choiceIndex} className="flex items-center space-x-2">
+                  <RadioGroupItem value={choiceIndex.toString()} id={`choice-${contentIndex}-${choiceIndex}`} />
+                  <Label 
+                    htmlFor={`choice-${contentIndex}-${choiceIndex}`}
+                    className="text-gray-300 cursor-pointer"
+                  >
+                    {choice}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+            {props.mcqFeedback[contentIndex] && (
+              <div className={`mt-3 p-2 rounded ${
+                props.mcqFeedback[contentIndex] === 'correct' 
+                  ? 'bg-green-900/30 text-green-300' 
+                  : 'bg-red-900/30 text-red-300'
+              }`}>
+                {props.mcqFeedback[contentIndex] === 'correct' ? '✅ Correct!' : '❌ Incorrect, try again!'}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+
+    default:
+      return <div>Unknown content type</div>;
+  }
+}
 
 export default function DrillPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = React.use(params);
@@ -38,6 +176,7 @@ export default function DrillPage({ params }: { params: Promise<{ id: string }> 
   const [mcqFeedback, setMcqFeedback] = useState<Record<string, 'correct' | 'incorrect'>>({});
   const [codeFeedback, setCodeFeedback] = useState<Record<string, 'correct' | 'incorrect'>>({});
   const [codeValidation, setCodeValidation] = useState<Record<string, boolean>>({});
+  const [currentUserCode, setCurrentUserCode] = useState<string>('');
   const [isValidating, setIsValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<'success' | 'error' | null>(null);
   const [startTime, setStartTime] = useState<Date | null>(null);
@@ -115,8 +254,14 @@ export default function DrillPage({ params }: { params: Promise<{ id: string }> 
               console.log('Original drill content:', originalDrill.drill_content);
               
               // Use the server action to generate dynamic drill content
+              // Serialize the drill object to avoid Firestore timestamp issues
+              const serializedDrill = {
+                ...originalDrill,
+                createdAt: originalDrill.createdAt?.toDate?.() || originalDrill.createdAt
+              };
+              
               const result = await generateDynamicDrill({
-                drill: originalDrill,
+                drill: serializedDrill,
                 workoutMode: workoutMode
               });
               
@@ -246,6 +391,21 @@ export default function DrillPage({ params }: { params: Promise<{ id: string }> 
       updatedAnswers[`${contentIndex}-${blankIndex}`] = value;
     });
     setUserAnswers(updatedAnswers);
+    
+    // Update current user code for AI assistant
+    const codeContent = displayDrill?.drill_content?.find((content, idx) => 
+      idx === contentIndex && content.type === 'code'
+    );
+    if (codeContent) {
+      // Reconstruct the code with user inputs
+      const parts = codeContent.value.split('____');
+      let reconstructedCode = parts[0];
+      for (let i = 0; i < parts.length - 1; i++) {
+        const userInput = answers[i] || '____';
+        reconstructedCode += userInput + (parts[i + 1] || '');
+      }
+      setCurrentUserCode(reconstructedCode);
+    }
   };
 
   // Handle code block validation changes
@@ -332,7 +492,7 @@ export default function DrillPage({ params }: { params: Promise<{ id: string }> 
         );
       case 'code':
         return (
-          <InteractiveCodeBlock
+          <ProvenApproach
             content={content}
             contentIndex={contentIndex}
             onAnswerChange={handleCodeAnswerChange}
@@ -434,7 +594,13 @@ export default function DrillPage({ params }: { params: Promise<{ id: string }> 
             </div>
             {isGenerating ? <div className="flex justify-center p-12"><LoaderCircle className="h-8 w-8 animate-spin" /></div> : (displayDrill.drill_content || []).map((content, i) => (
               <div key={i} className="p-6 rounded-lg bg-background/50 border">
-                {renderContent(content, i)}
+                {renderContent(content, i, {
+                  onAnswerChange: handleCodeAnswerChange,
+                  onValidationChange: handleCodeValidationChange,
+                  mcqAnswers,
+                  mcqFeedback,
+                  onMcqChange: handleMcqChange
+                })}
               </div>
             ))}
             {validationResult && (
@@ -462,6 +628,7 @@ export default function DrillPage({ params }: { params: Promise<{ id: string }> 
           codeContext={codeContext}
           proactiveHint={proactiveHint}
           drillCompleted={validationResult === 'success'}
+          currentUserCode={currentUserCode}
         />
       </div>
     </div>

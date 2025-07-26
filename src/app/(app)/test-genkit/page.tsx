@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { LoaderCircle } from "lucide-react";
 import { generateDynamicDrill } from "@/lib/actions";
+import { SyntaxHighlightTest } from "@/components/SyntaxHighlightTest";
 
 export default function TestGenkitPage() {
   const [question, setQuestion] = useState("");
@@ -276,6 +277,15 @@ export default function TestGenkitPage() {
           </CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Syntax Highlighting Test</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <SyntaxHighlightTest />
+        </CardContent>
+      </Card>
     </div>
   );
 }

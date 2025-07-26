@@ -6,6 +6,18 @@ import { z } from "zod";
 import CodeMirror from '@uiw/react-codemirror';
 import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 import { python } from '@codemirror/lang-python';
+import { javascript } from '@codemirror/lang-javascript';
+import { html } from '@codemirror/lang-html';
+import { css } from '@codemirror/lang-css';
+import { java } from '@codemirror/lang-java';
+import { cpp } from '@codemirror/lang-cpp';
+import { php } from '@codemirror/lang-php';
+import { rust } from '@codemirror/lang-rust';
+import { go } from '@codemirror/lang-go';
+import { sql } from '@codemirror/lang-sql';
+import { json } from '@codemirror/lang-json';
+import { xml } from '@codemirror/lang-xml';
+import { markdown } from '@codemirror/lang-markdown';
 import { generateDrillAction } from "@/lib/actions";
 
 import { Button } from "@/components/ui/button";
@@ -33,6 +45,7 @@ import { db, auth } from "@/lib/firebase/client";
 import { collection, addDoc } from "firebase/firestore";
 import { useState } from "react";
 import { LoaderCircle, Sparkles } from "lucide-react";
+import { ApiKeyStatus } from "@/components/ApiKeyStatus";
 
 const contentSchema = z.union([
   z.object({
@@ -42,7 +55,7 @@ const contentSchema = z.union([
   z.object({
     type: z.literal("code"),
     value: z.string().min(1, "Value is required"),
-    language: z.enum(["python"]).optional().default("python"),
+    language: z.string().optional().default("python"),
     solution: z.array(z.string()).optional().default([]),
   }),
   z.object({
@@ -62,6 +75,52 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+// Helper function to get CodeMirror language extension
+function getLanguageExtension(language: string) {
+  switch (language?.toLowerCase()) {
+    case 'python':
+    case 'py':
+      return python();
+    case 'javascript':
+    case 'js':
+    case 'jsx':
+      return javascript({ jsx: true });
+    case 'typescript':
+    case 'ts':
+    case 'tsx':
+      return javascript({ typescript: true, jsx: true });
+    case 'html':
+    case 'htm':
+      return html();
+    case 'css':
+      return css();
+    case 'java':
+      return java();
+    case 'cpp':
+    case 'c++':
+    case 'c':
+      return cpp();
+    case 'php':
+      return php();
+    case 'rust':
+    case 'rs':
+      return rust();
+    case 'go':
+      return go();
+    case 'sql':
+      return sql();
+    case 'json':
+      return json();
+    case 'xml':
+      return xml();
+    case 'markdown':
+    case 'md':
+      return markdown();
+    default:
+      return python(); // Default fallback
+  }
+}
 
 export default function CreateDrillPage() {
   const { toast } = useToast();
@@ -111,7 +170,6 @@ export default function CreateDrillPage() {
   }
 
   async function onSubmit(values: FormValues) {
-    alert('Form submission triggered!'); // Simple test
     setIsSubmitting(true);
     console.log('Form submission started with values:', values);
     const user = auth.currentUser;
@@ -130,11 +188,19 @@ export default function CreateDrillPage() {
     console.log('User authenticated:', user.uid);
 
     try {
+      // Validate content before processing
+      if (!values.content || values.content.length === 0) {
+        throw new Error('At least one content item is required');
+      }
+
       const drillContent = values.content.map(content => {
           if (content.type === 'code') {
+            const blankCount = content.value.split('____').length - 1;
             return {
               ...content,
-              blanks: content.value.split('____').length - 1,
+              blanks: blankCount,
+              // Ensure solution array matches blank count
+              solution: content.solution || Array(blankCount).fill(''),
             };
           }
           return content;
@@ -159,11 +225,11 @@ export default function CreateDrillPage() {
         description: "Drill created successfully!",
       });
       router.push('/drills');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating drill:', error);
       toast({
         title: "Error",
-        description: `Failed to create drill: ${error.message}`,
+        description: `Failed to create drill: ${error?.message || 'Unknown error occurred'}`,
         variant: "destructive",
       });
     } finally {
@@ -173,6 +239,11 @@ export default function CreateDrillPage() {
 
   return (
     <div className="container mx-auto p-6">
+        {/* API Key Status */}
+        <div className="mb-6">
+          <ApiKeyStatus showDetails={true} />
+        </div>
+
         <div className="space-y-4 mb-8">
             <h2 className="text-2xl font-bold font-headline flex items-center">
                 <Sparkles className="mr-3 h-6 w-6 text-primary" />
@@ -391,8 +462,45 @@ function CodeContentControl({
     name: `content.${index}.solution`,
   });
 
+  const currentLanguage = form.watch(`content.${index}.language`) || 'python';
+
   return (
     <div className="space-y-4">
+      <FormField
+        control={form.control}
+        name={`content.${index}.language`}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Programming Language</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a language" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="python">Python</SelectItem>
+                <SelectItem value="javascript">JavaScript</SelectItem>
+                <SelectItem value="typescript">TypeScript</SelectItem>
+                <SelectItem value="java">Java</SelectItem>
+                <SelectItem value="cpp">C++</SelectItem>
+                <SelectItem value="c">C</SelectItem>
+                <SelectItem value="html">HTML</SelectItem>
+                <SelectItem value="css">CSS</SelectItem>
+                <SelectItem value="php">PHP</SelectItem>
+                <SelectItem value="rust">Rust</SelectItem>
+                <SelectItem value="go">Go</SelectItem>
+                <SelectItem value="sql">SQL</SelectItem>
+                <SelectItem value="json">JSON</SelectItem>
+                <SelectItem value="xml">XML</SelectItem>
+                <SelectItem value="markdown">Markdown</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
       <FormField
         control={form.control}
         name={`content.${index}.value`}
@@ -403,7 +511,7 @@ function CodeContentControl({
               <CodeMirror
                 value={field.value}
                 height="200px"
-                extensions={[python()]}
+                extensions={[getLanguageExtension(currentLanguage)]}
                 theme={vscodeDark}
                 onChange={(value) => field.onChange(value)}
               />

@@ -10,6 +10,7 @@ import { collection, getDocs, query, where, limit, startAfter, DocumentData, Que
 import { useEffect, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { LoaderCircle } from 'lucide-react';
+import { ApiKeyStatus } from '@/components/ApiKeyStatus';
 
 export type DrillContent = {
   id: string;
@@ -129,6 +130,11 @@ export default function DrillsPage() {
         </div>
       </header>
       <main className="p-6 container mx-auto">
+        {/* API Key Status */}
+        <div className="mb-6">
+          <ApiKeyStatus showDetails={false} />
+        </div>
+        
         {reviewDrills.length > 0 && (
             <div className="mb-12">
                 <h2 className="text-2xl font-bold font-headline mb-4 flex items-center text-primary">

@@ -1,6 +1,6 @@
 'use client';
 
-import { FlaskConical, Notebook, PlusSquare, Bot, User, Settings } from 'lucide-react';
+import { FlaskConical, Notebook, PlusSquare, Bot, User, Settings, Key } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -17,9 +17,11 @@ export function Sidebar() {
     { href: '/drills/create', icon: PlusSquare, label: 'Custom Drills' },
     { href: '/notes', icon: Notebook, label: 'Notes' },
     { href: '/test-genkit', icon: Bot, label: 'Test AI' },
+    { href: '/test-languages', icon: Bot, label: 'Test Languages' },
   ];
 
   const footerLinks = [
+    { href: '/api-keys', icon: Key, label: 'Personal API' },
     { href: '/account', icon: User, label: 'Account' },
     { href: '/settings', icon: Settings, label: 'Settings' },
   ];

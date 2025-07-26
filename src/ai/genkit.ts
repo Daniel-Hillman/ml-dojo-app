@@ -15,5 +15,5 @@ export const ai = genkit({
     }),
   ],
   logLevel: 'debug',
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'googleai/gemini-2.0-flash-exp',
 });
