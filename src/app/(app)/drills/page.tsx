@@ -49,32 +49,43 @@ export default function DrillsPage() {
       
       setLoading(true);
 
-      const historyCollection = collection(db, `users/${user.uid}/drill_history`);
-      const reviewQuery = query(historyCollection, where('nextReviewDate', '<=', new Date()));
-      const historySnapshot = await getDocs(reviewQuery);
-      const reviewDrillIds = historySnapshot.docs.map(doc => doc.data().drillId);
+      try {
+        console.log('Fetching drills for user:', user.uid);
 
-      let drillsToReview: Drill[] = [];
-      if (reviewDrillIds.length > 0) {
+        const historyCollection = collection(db, `users/${user.uid}/drill_history`);
+        const reviewQuery = query(historyCollection, where('nextReviewDate', '<=', new Date()));
+        const historySnapshot = await getDocs(reviewQuery);
+        const reviewDrillIds = historySnapshot.docs.map(doc => doc.data().drillId);
+
+        let drillsToReview: Drill[] = [];
+        if (reviewDrillIds.length > 0) {
+          const drillsCollectionRef = collection(db, 'drills');
+          const reviewDrillsQuery = query(drillsCollectionRef, where('__name__', 'in', reviewDrillIds));
+          const reviewDrillsSnapshot = await getDocs(reviewDrillsQuery);
+          drillsToReview = reviewDrillsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Drill));
+          setReviewDrills(drillsToReview);
+        }
+
         const drillsCollectionRef = collection(db, 'drills');
-        const reviewDrillsQuery = query(drillsCollectionRef, where('__name__', 'in', reviewDrillIds));
-        const reviewDrillsSnapshot = await getDocs(reviewDrillsQuery);
-        drillsToReview = reviewDrillsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Drill));
-        setReviewDrills(drillsToReview);
+        const firstPageQuery = query(drillsCollectionRef, limit(9));
+        const drillsSnapshot = await getDocs(firstPageQuery);
+        
+        console.log('Fetched drills count:', drillsSnapshot.docs.length);
+        
+        const allFirstPageDrills = drillsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Drill));
+        
+        const regularDrills = allFirstPageDrills.filter(drill => !reviewDrillIds.includes(drill.id));
+        
+        setDrills(regularDrills);
+        setLastVisible(drillsSnapshot.docs[drillsSnapshot.docs.length - 1]);
+        setHasMore(drillsSnapshot.docs.length === 9);
+        
+        console.log('Regular drills loaded:', regularDrills.length);
+      } catch (error) {
+        console.error('Error fetching drills:', error);
+      } finally {
+        setLoading(false);
       }
-
-      const drillsCollectionRef = collection(db, 'drills');
-      const firstPageQuery = query(drillsCollectionRef, limit(9));
-      const drillsSnapshot = await getDocs(firstPageQuery);
-      
-      const allFirstPageDrills = drillsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Drill));
-      
-      const regularDrills = allFirstPageDrills.filter(drill => !reviewDrillIds.includes(drill.id));
-      
-      setDrills(regularDrills);
-      setLastVisible(drillsSnapshot.docs[drillsSnapshot.docs.length - 1]);
-      setHasMore(drillsSnapshot.docs.length === 9);
-      setLoading(false);
     };
 
     initialFetch();

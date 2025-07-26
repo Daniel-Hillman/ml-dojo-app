@@ -68,6 +68,322 @@ export async function getCodeCompletion(input: z.infer<typeof GenerateCodeComple
   }
 }
 
+const GenerateDynamicDrillInputSchema = z.object({
+  drill: z.any(),
+  workoutMode: z.enum(["Crawl", "Walk", "Run"]),
+});
+
+// Simple in-memory cache for generated drill content
+const drillContentCache = new Map<string, any[]>();
+
+function getCacheKey(drillId: string, workoutMode: string): string {
+  return `${drillId}-${workoutMode}`;
+}
+
+// Content validation functions
+function validateDrillContent(content: any[]): { isValid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  
+  if (!Array.isArray(content)) {
+    errors.push("Content must be an array");
+    return { isValid: false, errors };
+  }
+  
+  content.forEach((item, index) => {
+    // Validate basic structure
+    if (!item.type || !item.value) {
+      errors.push(`Item ${index}: Missing required fields 'type' or 'value'`);
+      return;
+    }
+    
+    // Validate type
+    if (!['theory', 'code', 'mcq'].includes(item.type)) {
+      errors.push(`Item ${index}: Invalid type '${item.type}'`);
+    }
+    
+    // Validate code blocks
+    if (item.type === 'code') {
+      const blankCount = (item.value.match(/____/g) || []).length;
+      
+      if (blankCount === 0) {
+        errors.push(`Item ${index}: Code block has no blanks`);
+      }
+      
+      if (item.solution) {
+        if (!Array.isArray(item.solution)) {
+          errors.push(`Item ${index}: Solution must be an array`);
+        } else if (item.solution.length !== blankCount) {
+          errors.push(`Item ${index}: Solution array length (${item.solution.length}) doesn't match blank count (${blankCount})`);
+        }
+      }
+    }
+    
+    // Validate MCQ blocks
+    if (item.type === 'mcq') {
+      if (!item.choices || !Array.isArray(item.choices)) {
+        errors.push(`Item ${index}: MCQ must have choices array`);
+      } else if (item.choices.length < 2) {
+        errors.push(`Item ${index}: MCQ must have at least 2 choices`);
+      }
+      
+      if (typeof item.answer !== 'number') {
+        errors.push(`Item ${index}: MCQ answer must be a number`);
+      } else if (item.choices && (item.answer < 0 || item.answer >= item.choices.length)) {
+        errors.push(`Item ${index}: MCQ answer index out of range`);
+      }
+    }
+    
+    // Validate content length
+    if (typeof item.value !== 'string' || item.value.trim().length === 0) {
+      errors.push(`Item ${index}: Value must be a non-empty string`);
+    }
+  });
+  
+  return { isValid: errors.length === 0, errors };
+}
+
+function fixDrillContent(content: any[]): any[] {
+  return content.map(item => {
+    const fixedItem = { ...item };
+    
+    // Fix code blocks
+    if (item.type === 'code') {
+      const blankCount = (item.value.match(/____/g) || []).length;
+      
+      // Ensure solution array exists and matches blank count
+      if (!fixedItem.solution || !Array.isArray(fixedItem.solution)) {
+        fixedItem.solution = Array(blankCount).fill("");
+      } else if (fixedItem.solution.length !== blankCount) {
+        if (fixedItem.solution.length < blankCount) {
+          // Pad with empty strings
+          fixedItem.solution = [...fixedItem.solution, ...Array(blankCount - fixedItem.solution.length).fill("")];
+        } else {
+          // Trim excess solutions
+          fixedItem.solution = fixedItem.solution.slice(0, blankCount);
+        }
+      }
+      
+      // Set blanks count
+      fixedItem.blanks = blankCount;
+      
+      // Ensure language is set
+      if (!fixedItem.language) {
+        fixedItem.language = 'python';
+      }
+    }
+    
+    // Fix MCQ blocks
+    if (item.type === 'mcq') {
+      // Ensure choices array exists
+      if (!fixedItem.choices || !Array.isArray(fixedItem.choices)) {
+        fixedItem.choices = ["Option A", "Option B"];
+      }
+      
+      // Ensure answer is valid
+      if (typeof fixedItem.answer !== 'number' || fixedItem.answer < 0 || fixedItem.answer >= fixedItem.choices.length) {
+        fixedItem.answer = 0;
+      }
+    }
+    
+    return fixedItem;
+  });
+}
+
+async function retryWithBackoff<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<T> {
+  let lastError: Error;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+      
+      if (attempt === maxRetries) {
+        throw lastError;
+      }
+      
+      // Exponential backoff with jitter
+      const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
+      console.log(`Attempt ${attempt + 1} failed, retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw lastError!;
+}
+
+export async function generateDynamicDrill(input: z.infer<typeof GenerateDynamicDrillInputSchema>) {
+  try {
+    const { ai } = await import('@/ai/genkit');
+    
+    const originalContent = input.drill.drill_content;
+    
+    // For Walk mode, return original content immediately without AI processing
+    if (input.workoutMode === "Walk") {
+      return { drillContent: originalContent };
+    }
+    
+    // Check cache first
+    const cacheKey = getCacheKey(input.drill.id, input.workoutMode);
+    const cachedContent = drillContentCache.get(cacheKey);
+    if (cachedContent) {
+      console.log(`Using cached content for ${input.workoutMode} mode`);
+      return { drillContent: cachedContent };
+    }
+    
+    let prompt;
+    switch (input.workoutMode) {
+      case "Crawl":
+        prompt = `You are an expert AI programming tutor specializing in adaptive learning. Transform this drill content for BEGINNER learners who need maximum guidance.
+
+ORIGINAL DRILL CONTENT:
+${JSON.stringify(originalContent, null, 2)}
+
+CRAWL MODE TRANSFORMATION RULES:
+
+For CODE blocks:
+1. MULTIPLY blanks: If original has 2 blanks, create 4-6 smaller blanks
+2. Break down complex expressions into atomic parts:
+   - Original: "for ____ in range(10):" → "for ____ in ____(____):"
+   - Original: "result = x * 2 + 1" → "result = ____ ____ ____ ____ ____"
+3. Blank out basic syntax elements: operators (+, -, *, /), keywords (if, for, while), simple values
+4. Keep variable names and complex logic visible as hints
+5. Add intermediate steps that were combined in original
+6. Solution array must match the new number of blanks exactly
+
+For MCQ blocks:
+1. Simplify language and use more basic terminology
+2. Make correct answers more obvious
+3. Add clearly wrong "distractor" answers
+4. Focus on fundamental concepts rather than edge cases
+
+For THEORY blocks:
+1. Keep unchanged - theory provides context
+
+CRITICAL REQUIREMENTS:
+- Maintain exact JSON structure with same field names
+- Ensure solution arrays have exactly the right number of elements for new blanks
+- Keep the same learning objectives but make them more accessible
+- All blanks must be fillable with simple, short answers
+
+Return ONLY the JSON array of modified drill content. No explanations, no markdown formatting.`;
+        break;
+        
+      case "Run":
+        prompt = `You are an expert AI programming tutor specializing in advanced challenges. Transform this drill content for EXPERT learners who want maximum difficulty.
+
+ORIGINAL DRILL CONTENT:
+${JSON.stringify(originalContent, null, 2)}
+
+RUN MODE TRANSFORMATION RULES:
+
+For CODE blocks:
+1. CONSOLIDATE blanks: Combine 2-3 small blanks into 1 large conceptual blank
+2. Create comprehensive blanks that require deep understanding:
+   - Original: "for i in ____:" → "____:"  (entire loop structure)
+   - Original: "if x > 0:" → "____:" (entire conditional logic)
+3. Blank out entire expressions, function calls, or algorithm implementations
+4. Remove scaffolding and intermediate steps - make users think through the complete solution
+5. Focus on algorithmic thinking rather than syntax
+6. Solution array must contain complete expressions/statements for each blank
+
+For MCQ blocks:
+1. Add subtle edge cases and tricky scenarios
+2. Include multiple partially-correct answers
+3. Test deep conceptual understanding, not just memorization
+4. Add questions about performance, best practices, or alternative approaches
+
+For THEORY blocks:
+1. Keep unchanged - theory provides context
+
+CRITICAL REQUIREMENTS:
+- Maintain exact JSON structure with same field names
+- Solution arrays must contain complete, executable code segments
+- Each blank should test significant conceptual understanding
+- Blanks should require writing substantial code, not just single words
+
+Return ONLY the JSON array of modified drill content. No explanations, no markdown formatting.`;
+        break;
+    }
+
+    console.log(`Generating ${input.workoutMode} mode content with enhanced prompts`);
+    
+    // Use retry logic for AI generation
+    const response = await retryWithBackoff(async () => {
+      return await ai.generate(prompt);
+    }, 3, 1000);
+    
+    // Enhanced JSON cleaning and validation
+    let jsonText = response.text.trim();
+    
+    // Remove various markdown formatting
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
+    
+    // Remove any leading/trailing text that isn't JSON
+    const jsonStart = jsonText.indexOf('[');
+    const jsonEnd = jsonText.lastIndexOf(']');
+    if (jsonStart !== -1 && jsonEnd !== -1) {
+      jsonText = jsonText.substring(jsonStart, jsonEnd + 1);
+    }
+    
+    try {
+      const modifiedContent = JSON.parse(jsonText);
+      
+      // Validate the generated content
+      const validation = validateDrillContent(modifiedContent);
+      
+      if (!validation.isValid) {
+        console.warn("Generated content has validation errors:", validation.errors);
+        console.log("Attempting to fix content automatically...");
+        
+        // Try to fix the content automatically
+        const fixedContent = fixDrillContent(modifiedContent);
+        
+        // Validate the fixed content
+        const fixedValidation = validateDrillContent(fixedContent);
+        
+        if (fixedValidation.isValid) {
+          console.log("Successfully fixed content validation issues");
+          return { drillContent: fixedContent };
+        } else {
+          console.error("Could not fix content validation issues:", fixedValidation.errors);
+          throw new Error("Generated content is invalid and could not be fixed");
+        }
+      }
+      
+      console.log(`Successfully generated and validated ${input.workoutMode} mode content`);
+      
+      // Cache the generated content
+      drillContentCache.set(cacheKey, modifiedContent);
+      
+      return { drillContent: modifiedContent };
+      
+    } catch (parseError) {
+      console.error("Error parsing AI response:", parseError);
+      console.error("Raw response:", jsonText);
+      console.error("Full AI response:", response.text);
+      
+      // Enhanced fallback: try to extract partial content or return original
+      console.log(`Falling back to original content for ${input.workoutMode} mode`);
+      return { drillContent: originalContent };
+    }
+    
+  } catch (error) {
+    console.error("Error generating dynamic drill:", error);
+    // Fallback to original content if generation fails
+    console.log(`Error fallback: returning original content for ${input.workoutMode} mode`);
+    return { drillContent: input.drill.drill_content };
+  }
+}
+
 export async function generateDrillAction(prompt: string) {
     try {
         // Import the AI instance directly since we're in a server action

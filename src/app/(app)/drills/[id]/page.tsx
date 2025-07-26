@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { AIAssistant } from '@/components/AIAssistant';
-import { Lightbulb, LoaderCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Lightbulb, LoaderCircle, CheckCircle, XCircle, Baby, User, Zap } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Drill, DrillContent } from '../page';
 import { db, auth } from '@/lib/firebase/client';
@@ -20,12 +20,13 @@ import { notFound } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { debounce } from 'lodash';
 import { calculateNextReviewDate } from '@/lib/srs';
-// Removed generateDynamicDrill import to avoid OpenTelemetry browser issues
+import { generateDynamicDrill } from '@/lib/actions';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
 type WorkoutMode = 'Crawl' | 'Walk' | 'Run';
 
-export default function DrillPage({ params }: { params: { id: string } }) {
+export default function DrillPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = React.use(params);
   const { toast } = useToast();
   const [user, authLoading] = useAuthState(auth);
   const [originalDrill, setOriginalDrill] = useState<Drill | null>(null);
@@ -50,24 +51,41 @@ export default function DrillPage({ params }: { params: { id: string } }) {
     setStartTime(new Date());
     const fetchDrill = async () => {
       if (!user) {
+          console.log('No user authenticated, skipping drill fetch');
           setLoading(false);
           return;
       }
-      const drillDoc = doc(db, 'drills', params.id);
-      const drillSnapshot = await getDoc(drillDoc);
+      
+      try {
+        console.log('Fetching drill with ID:', resolvedParams.id);
+        console.log('User authenticated:', user.uid);
+        
+        const drillDoc = doc(db, 'drills', resolvedParams.id);
+        const drillSnapshot = await getDoc(drillDoc);
 
-      if (drillSnapshot.exists()) {
-        const drillData = { id: drillSnapshot.id, ...drillSnapshot.data() } as Drill;
-        setOriginalDrill(drillData);
-        setDisplayDrill(drillData);
-      } else {
-        notFound();
+        if (drillSnapshot.exists()) {
+          const drillData = { id: drillSnapshot.id, ...drillSnapshot.data() } as Drill;
+          console.log('Drill data fetched successfully:', drillData);
+          setOriginalDrill(drillData);
+          setDisplayDrill(drillData);
+        } else {
+          console.error('Drill not found with ID:', resolvedParams.id);
+          notFound();
+        }
+      } catch (error) {
+        console.error('Error fetching drill:', error);
+        toast({
+          title: 'Error Loading Drill',
+          description: 'Failed to load the drill. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchDrill();
-  }, [params.id, user, authLoading]);
+  }, [resolvedParams.id, user, authLoading]);
 
   useEffect(() => {
     if (stuckTimer.current) {
@@ -86,28 +104,120 @@ export default function DrillPage({ params }: { params: { id: string } }) {
   }, [stuckOn]);
   
   useEffect(() => {
-    const generateNewDrill = async () => {
+    const adaptDrillForWorkoutMode = async () => {
         if(originalDrill){
             setIsGenerating(true);
-            // This is a placeholder for the actual dynamic drill generation
-            // In a real implementation, you would call your AI flow here
-            // For now, we'll just simulate a delay
-            setTimeout(() => {
-                setDisplayDrill(originalDrill);
-                setIsGenerating(false);
-            }, 500);
+            
+            try {
+              console.log(`Adapting drill for ${workoutMode} mode`);
+              console.log('Original drill content:', originalDrill.drill_content);
+              
+              // Use the server action to generate dynamic drill content
+              const result = await generateDynamicDrill({
+                drill: originalDrill,
+                workoutMode: workoutMode
+              });
+              
+              console.log(`${workoutMode} mode result:`, result.drillContent);
+              
+              // Create adapted drill with new content
+              const adaptedDrill = {
+                ...originalDrill,
+                drill_content: result.drillContent
+              };
+              
+              setDisplayDrill(adaptedDrill);
+              
+              // Reset user answers and feedback when drill content changes
+              setUserAnswers({});
+              setMcqAnswers({});
+              setMcqFeedback({});
+              setCodeFeedback({});
+              setValidationResult(null);
+              setAttempts(0); // Reset attempts counter for new mode
+            } catch (error) {
+              console.error('Error adapting drill for workout mode:', error);
+              // Fallback to original drill if adaptation fails
+              setDisplayDrill(originalDrill);
+              toast({
+                title: 'Mode Generation Failed',
+                description: `Could not generate ${workoutMode} mode content. Using original drill instead.`,
+                variant: 'destructive',
+              });
+            } finally {
+              setIsGenerating(false);
+            }
         }
     }
-    generateNewDrill();
+    adaptDrillForWorkoutMode();
   }, [workoutMode, originalDrill]);
 
   const debouncedCodeValidation = useCallback(debounce((contentIndex: number, blankIndex: number, value: string, correctAnswer: string) => {
-    if (value.trim() === correctAnswer.trim()) {
-        setCodeFeedback(prev => ({ ...prev, [`${contentIndex}-${blankIndex}`]: 'correct' }));
+    if (value.trim() === '') {
+      // Remove feedback for empty values
+      setCodeFeedback(prev => {
+        const newFeedback = { ...prev };
+        delete newFeedback[`${contentIndex}-${blankIndex}`];
+        return newFeedback;
+      });
+    } else if (value.trim() === correctAnswer.trim()) {
+      setCodeFeedback(prev => ({ ...prev, [`${contentIndex}-${blankIndex}`]: 'correct' }));
     } else {
-        setCodeFeedback(prev => ({ ...prev, [`${contentIndex}-${blankIndex}`]: 'incorrect' }));
+      setCodeFeedback(prev => ({ ...prev, [`${contentIndex}-${blankIndex}`]: 'incorrect' }));
     }
   }, 500), []);
+
+  // Function to validate code answers by extracting from the full code
+  const validateCodeAnswers = useCallback((contentIndex: number, userCode: string, originalCode: string, solutions: string[]) => {
+    // Simple validation: just check if blanks are filled
+    const hasUnfilledBlanks = userCode.includes('____');
+    const feedback = hasUnfilledBlanks ? 'partial' : 'correct';
+    
+    setCodeFeedback(prev => ({ 
+      ...prev, 
+      [`${contentIndex}-overall`]: feedback 
+    }));
+    
+    // Extract individual answers for form submission
+    const originalParts = originalCode.split('____');
+    let remainingCode = userCode;
+    
+    for (let i = 0; i < originalParts.length - 1; i++) {
+      const beforePart = originalParts[i];
+      const afterPart = originalParts[i + 1] || '';
+      
+      // Remove the before part
+      if (beforePart) {
+        const beforeIndex = remainingCode.indexOf(beforePart);
+        if (beforeIndex !== -1) {
+          remainingCode = remainingCode.substring(beforeIndex + beforePart.length);
+        }
+      }
+      
+      // Extract the answer
+      let answer = '';
+      if (afterPart.trim() === '') {
+        answer = remainingCode.trim();
+      } else {
+        const afterIndex = remainingCode.indexOf(afterPart);
+        if (afterIndex !== -1) {
+          answer = remainingCode.substring(0, afterIndex).trim();
+          remainingCode = remainingCode.substring(afterIndex);
+        }
+      }
+      
+      // Store the extracted answer
+      setUserAnswers(prev => ({ 
+        ...prev, 
+        [`${contentIndex}-${i}`]: answer 
+      }));
+    }
+  }, []);
+
+  // Debounced version of code validation for the full editor
+  const debouncedFullCodeValidation = useCallback(debounce((contentIndex: number, userCode: string, originalCode: string, solutions: string[]) => {
+    validateCodeAnswers(contentIndex, userCode, originalCode, solutions);
+  }, 800), [validateCodeAnswers]);
 
 
   if (loading || authLoading) {
@@ -118,10 +228,20 @@ export default function DrillPage({ params }: { params: { id: string } }) {
     return <div>Drill not found or you do not have permission to view it.</div>;
   }
 
+  // Enhanced blank parsing function
+  const parseCodeBlanks = (codeValue: string) => {
+    const parts = codeValue.split('____');
+    const blankCount = parts.length - 1;
+    return { parts, blankCount };
+  };
+
+  // Enhanced input change handler with better validation
   const handleInputChange = (contentIndex: number, blankIndex: number, value: string, correctAnswer: string) => {
     setUserAnswers(prev => ({ ...prev, [`${contentIndex}-${blankIndex}`]: value }));
     debouncedCodeValidation(contentIndex, blankIndex, value, correctAnswer);
   };
+
+
 
   const handleMcqChange = (contentIndex: number, value: string, correctAnswer: number) => {
     const selectedAnswer = parseInt(value);
@@ -143,14 +263,12 @@ export default function DrillPage({ params }: { params: { id: string } }) {
     for (const [contentIndex, content] of (displayDrill.drill_content || []).entries()) {
       if (content.type === 'code') {
         if (!content.solution) continue;
-        const solution = content.solution;
-        for (let i = 0; i < (content.blanks || 0); i++) {
-          const userAnswer = userAnswers[`${contentIndex}-${i}`] || '';
-          const correctAnswer = solution[i];
-          if (userAnswer.trim() !== correctAnswer.trim()) {
-            isCorrect = false;
-            break;
-          }
+        
+        // Check if the overall code validation is correct
+        const overallFeedback = codeFeedback[`${contentIndex}-overall`];
+        if (overallFeedback !== 'correct') {
+          isCorrect = false;
+          break;
         }
       } else if (content.type === 'mcq') {
         const userAnswer = mcqAnswers[contentIndex];
@@ -203,36 +321,81 @@ export default function DrillPage({ params }: { params: { id: string } }) {
           </div>
         );
       case 'code':
+        // Simple approach: always show editable code
+        const initialCode = content.value;
+        const currentCode = userAnswers[`${contentIndex}-code`] || initialCode;
+        
         return (
-          <div className="bg-gray-800 text-white rounded-lg p-4 font-mono text-sm overflow-x-auto">
-            <pre>
-              <code>
-                {content.value.split('____').map((part, i) => {
-                  const feedbackKey = `${contentIndex}-${i}`;
-                  const feedback = codeFeedback[feedbackKey];
-                  return (
-                  <span key={i} className="relative inline-flex items-center">
-                    {part}
-                    {i < (content.blanks || 0) && (
-                      <div className="inline-block w-48 mx-1 relative">
-                        <CodeMirror
-                          value={userAnswers[`${contentIndex}-${i}`] || ''}
-                          height="30px"
-                          extensions={[python()]}
-                          theme={vscodeDark}
-                          onChange={(value) => handleInputChange(contentIndex, i, value, content.solution?.[i] || '')}
-                          onFocus={() => setStuckOn(`${contentIndex}-${i}`)}
-                          onBlur={() => setStuckOn(null)}
-                          className="w-full"
-                        />
-                         {feedback === 'correct' && <CheckCircle className="absolute top-1/2 right-2 transform -translate-y-1/2 h-4 w-4 text-green-400" />}
-                         {feedback === 'incorrect' && <XCircle className="absolute top-1/2 right-2 transform -translate-y-1/2 h-4 w-4 text-red-400" />}
-                      </div>
-                    )}
-                  </span>
-                )})}
-              </code>
-            </pre>
+          <div className="rounded-lg overflow-hidden border border-gray-700">
+            <div className="bg-gray-800 px-4 py-2 text-sm text-gray-300 border-b border-gray-700 flex items-center justify-between">
+              <span>💡 Edit the code directly - replace ____ with your answers</span>
+              {codeFeedback[`${contentIndex}-overall`] === 'correct' && (
+                <div className="flex items-center text-green-400">
+                  <CheckCircle className="mr-1 h-4 w-4" />
+                  Complete!
+                </div>
+              )}
+            </div>
+            <CodeMirror
+              value={currentCode}
+              height="auto"
+              extensions={[python()]}
+              theme={vscodeDark}
+              editable={true}
+              className="w-full"
+              onChange={(value) => {
+                // Store the entire code content
+                setUserAnswers(prev => ({ ...prev, [`${contentIndex}-code`]: value }));
+                
+                // Simple validation: check if all blanks are filled
+                const hasUnfilledBlanks = value.includes('____');
+                const feedback = hasUnfilledBlanks ? 'partial' : 'correct';
+                
+                setCodeFeedback(prev => ({ 
+                  ...prev, 
+                  [`${contentIndex}-overall`]: feedback 
+                }));
+                
+                // Extract individual answers for form submission
+                const originalParts = content.value.split('____');
+                const solutions = content.solution || [];
+                
+                // Simple extraction: split by the original parts
+                let remainingCode = value;
+                for (let i = 0; i < originalParts.length - 1; i++) {
+                  const beforePart = originalParts[i];
+                  const afterPart = originalParts[i + 1] || '';
+                  
+                  // Remove the before part
+                  if (beforePart) {
+                    const beforeIndex = remainingCode.indexOf(beforePart);
+                    if (beforeIndex !== -1) {
+                      remainingCode = remainingCode.substring(beforeIndex + beforePart.length);
+                    }
+                  }
+                  
+                  // Extract the answer
+                  let answer = '';
+                  if (afterPart.trim() === '') {
+                    answer = remainingCode.trim();
+                  } else {
+                    const afterIndex = remainingCode.indexOf(afterPart);
+                    if (afterIndex !== -1) {
+                      answer = remainingCode.substring(0, afterIndex).trim();
+                      remainingCode = remainingCode.substring(afterIndex);
+                    }
+                  }
+                  
+                  // Store the extracted answer
+                  setUserAnswers(prev => ({ 
+                    ...prev, 
+                    [`${contentIndex}-${i}`]: answer 
+                  }));
+                }
+              }}
+              onFocus={() => setStuckOn(`${contentIndex}-code`)}
+              onBlur={() => setStuckOn(null)}
+            />
           </div>
         );
       case 'mcq':
@@ -293,18 +456,40 @@ export default function DrillPage({ params }: { params: { id: string } }) {
           </CardHeader>
           <CardContent className="space-y-8">
             <div className="flex justify-center bg-background/30 p-2 rounded-lg space-x-2">
-              {(['Crawl', 'Walk', 'Run'] as WorkoutMode[]).map(mode => (
-                <Button 
-                  key={mode} 
-                  variant={workoutMode === mode ? 'default' : 'ghost'}
-                  onClick={() => setWorkoutMode(mode)}
-                  disabled={isGenerating}
-                  className="flex-1"
-                >
-                  {isGenerating && workoutMode === mode ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  {mode}
-                </Button>
-              ))}
+              {(['Crawl', 'Walk', 'Run'] as WorkoutMode[]).map(mode => {
+                const getModeIcon = (mode: WorkoutMode) => {
+                  switch (mode) {
+                    case 'Crawl': return <Baby className="mr-2 h-4 w-4" />;
+                    case 'Walk': return <User className="mr-2 h-4 w-4" />;
+                    case 'Run': return <Zap className="mr-2 h-4 w-4" />;
+                  }
+                };
+                
+                const getModeTooltip = (mode: WorkoutMode) => {
+                  switch (mode) {
+                    case 'Crawl': return 'Easiest - More guidance with smaller blanks';
+                    case 'Walk': return 'Standard - Original difficulty level';
+                    case 'Run': return 'Hardest - Fewer hints, larger challenges';
+                  }
+                };
+                
+                return (
+                  <Button 
+                    key={mode} 
+                    variant={workoutMode === mode ? 'default' : 'ghost'}
+                    onClick={() => setWorkoutMode(mode)}
+                    disabled={isGenerating}
+                    className="flex-1"
+                    title={getModeTooltip(mode)}
+                  >
+                    {isGenerating && workoutMode === mode ? 
+                      <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : 
+                      getModeIcon(mode)
+                    }
+                    {mode}
+                  </Button>
+                );
+              })}
             </div>
             {isGenerating ? <div className="flex justify-center p-12"><LoaderCircle className="h-8 w-8 animate-spin" /></div> : (displayDrill.drill_content || []).map((content, i) => (
               <div key={i} className="p-6 rounded-lg bg-background/50 border">
