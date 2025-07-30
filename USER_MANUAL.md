@@ -1,6 +1,6 @@
-# ML Dojo - User Manual
+# OmniCode - User Manual
 
-Welcome to ML Dojo, your personal AI-powered tutor for mastering machine learning and coding concepts. This guide will walk you through all the features of the application.
+Welcome to OmniCode, your personal AI-powered tutor for mastering machine learning and coding concepts. This guide will walk you through all the features of the application.
 
 ---
 
@@ -21,7 +21,7 @@ This is your main dashboard. It's split into two sections:
 
 ### Practicing a Drill
 
-This is the core of the ML Dojo experience.
+This is the core of the OmniCode experience.
 
 - **Real-Time Feedback:** You don't have to wait until the end to see how you're doing.
   - For Multiple Choice Questions (MCQs), you'll get instant feedback on whether your answer was correct or incorrect.
@@ -55,4 +55,4 @@ You are not limited to the pre-defined drills.
 
 ## 3. The Goal
 
-The ultimate goal of ML Dojo is to help you build "muscle memory" for coding and ML concepts. By using the Spaced Repetition System, getting real-time feedback, and leveraging the AI tutor, you can practice more effectively and retain what you've learned for longer.
+The ultimate goal of OmniCode is to help you build "muscle memory" for coding and ML concepts. By using the Spaced Repetition System, getting real-time feedback, and leveraging the AI tutor, you can practice more effectively and retain what you've learned for longer.

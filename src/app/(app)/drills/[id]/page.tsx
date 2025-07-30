@@ -13,7 +13,7 @@ import { Lightbulb, LoaderCircle, CheckCircle, XCircle, Baby, User, Zap } from '
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Drill, DrillContent } from '../page';
 import { db, auth } from '@/lib/firebase/client';
-import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, addDoc, collection, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
 import { javascript } from '@codemirror/lang-javascript';
@@ -35,6 +35,7 @@ import { debounce } from 'lodash';
 import { calculateNextReviewDate } from '@/lib/srs';
 import { generateDynamicDrill } from '@/lib/actions';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { incrementDrillViews, isCommunityDrill, getCommunityDrill } from '@/lib/community';
 
 type WorkoutMode = 'Crawl' | 'Walk' | 'Run';
 
@@ -186,6 +187,9 @@ export default function DrillPage({ params }: { params: Promise<{ id: string }> 
   const stuckTimer = useRef<NodeJS.Timeout | null>(null);
   const [workoutMode, setWorkoutMode] = useState<WorkoutMode>('Walk');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isCommunityDrillState, setIsCommunityDrillState] = useState(false);
+  const [communityDrillData, setCommunityDrillData] = useState<any>(null);
+  const [isSavedDrill, setIsSavedDrill] = useState(false);
 
   useEffect(() => {
     if (authLoading) return; 
@@ -201,17 +205,84 @@ export default function DrillPage({ params }: { params: Promise<{ id: string }> 
         console.log('Fetching drill with ID:', resolvedParams.id);
         console.log('User authenticated:', user.uid);
         
+        // First try to get from personal drills
         const drillDoc = doc(db, 'drills', resolvedParams.id);
         const drillSnapshot = await getDoc(drillDoc);
 
         if (drillSnapshot.exists()) {
           const drillData = { id: drillSnapshot.id, ...drillSnapshot.data() } as Drill;
-          console.log('Drill data fetched successfully:', drillData);
+          console.log('Personal drill data fetched successfully:', drillData);
           setOriginalDrill(drillData);
           setDisplayDrill(drillData);
+          setIsCommunityDrillState(false);
         } else {
-          console.error('Drill not found with ID:', resolvedParams.id);
-          notFound();
+          // Check if this is a saved community drill first
+          const savedDrillsQuery = query(
+            collection(db, `users/${user.uid}/saved_drills`),
+            where('drillId', '==', resolvedParams.id)
+          );
+          const savedDrillsSnapshot = await getDocs(savedDrillsQuery);
+          
+          if (!savedDrillsSnapshot.empty) {
+            // This is a saved community drill - use the exact saved content
+            const savedDrillDoc = savedDrillsSnapshot.docs[0];
+            const savedDrillData = savedDrillDoc.data();
+            
+            console.log('Found saved community drill:', savedDrillData);
+            
+            // Use the original drill data that was saved
+            const drillData = {
+              id: savedDrillData.drillId,
+              title: savedDrillData.originalDrillData.title,
+              concept: savedDrillData.originalDrillData.concept,
+              difficulty: savedDrillData.originalDrillData.difficulty,
+              description: savedDrillData.originalDrillData.description,
+              drill_content: savedDrillData.originalDrillData.content,
+              userId: savedDrillData.originalDrillData.authorId,
+              createdAt: savedDrillData.originalDrillData.createdAt?.toDate?.() || savedDrillData.originalDrillData.createdAt
+            } as Drill;
+            
+            console.log('Saved community drill data loaded:', drillData);
+            setOriginalDrill(drillData);
+            setDisplayDrill(drillData);
+            setIsCommunityDrillState(true);
+            setIsSavedDrill(true); // Mark as saved drill
+            setCommunityDrillData({
+              ...savedDrillData.originalDrillData,
+              id: savedDrillData.drillId
+            });
+            
+            // Don't increment view count for saved drills to avoid inflating numbers
+          } else {
+            // Try to get from community drills (direct access)
+            const communityDrill = await getCommunityDrill(resolvedParams.id);
+            
+            if (communityDrill) {
+              // Convert community drill format to regular drill format
+              const drillData = {
+                id: communityDrill.id,
+                title: communityDrill.title,
+                concept: communityDrill.concept,
+                difficulty: communityDrill.difficulty,
+                description: communityDrill.description,
+                drill_content: communityDrill.content,
+                userId: communityDrill.authorId,
+                createdAt: communityDrill.createdAt
+              } as Drill;
+              
+              console.log('Community drill data fetched successfully:', drillData);
+              setOriginalDrill(drillData);
+              setDisplayDrill(drillData);
+              setIsCommunityDrillState(true);
+              setCommunityDrillData(communityDrill);
+              
+              // Increment view count for community drills (not saved ones)
+              await incrementDrillViews(resolvedParams.id);
+            } else {
+              console.error('Drill not found with ID:', resolvedParams.id);
+              notFound();
+            }
+          }
         }
       } catch (error) {
         console.error('Error fetching drill:', error);
@@ -247,6 +318,14 @@ export default function DrillPage({ params }: { params: Promise<{ id: string }> 
   useEffect(() => {
     const adaptDrillForWorkoutMode = async () => {
         if(originalDrill){
+            // Skip dynamic generation for saved community drills
+            // Users should get the exact drill they saved
+            if (isSavedDrill) {
+              console.log('Skipping dynamic generation for saved community drill');
+              setDisplayDrill(originalDrill);
+              return;
+            }
+            
             setIsGenerating(true);
             
             try {
@@ -298,7 +377,7 @@ export default function DrillPage({ params }: { params: Promise<{ id: string }> 
         }
     }
     adaptDrillForWorkoutMode();
-  }, [workoutMode, originalDrill]);
+  }, [workoutMode, originalDrill, isSavedDrill]);
 
   const debouncedCodeValidation = useCallback(debounce((contentIndex: number, blankIndex: number, value: string, correctAnswer: string) => {
     if (value.trim() === '') {
@@ -545,7 +624,25 @@ export default function DrillPage({ params }: { params: Promise<{ id: string }> 
         <Card className="shadow-xl bg-card/50 backdrop-blur-sm">
           <CardHeader>
             <div className="flex justify-between items-center">
-                <CardTitle className="text-3xl font-headline">{displayDrill.title}</CardTitle>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <CardTitle className="text-3xl font-headline">{displayDrill.title}</CardTitle>
+                    {isCommunityDrillState && (
+                      <Badge variant="secondary" className="bg-purple-500/10 text-purple-500 border-purple-500/20">
+                        Community
+                      </Badge>
+                    )}
+                  </div>
+                  {isCommunityDrillState && communityDrillData && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>Created by {communityDrillData.authorName}</span>
+                      <span>•</span>
+                      <span>{communityDrillData.views} views</span>
+                      <span>•</span>
+                      <span>{communityDrillData.likes} likes</span>
+                    </div>
+                  )}
+                </div>
                 <Badge 
                     variant={displayDrill.difficulty === 'Beginner' ? 'default' : displayDrill.difficulty === 'Intermediate' ? 'secondary' : 'destructive'}
                     className="text-base"
@@ -556,42 +653,57 @@ export default function DrillPage({ params }: { params: Promise<{ id: string }> 
             <CardDescription className="text-lg text-muted-foreground">{displayDrill.concept}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">
-            <div className="flex justify-center bg-background/30 p-2 rounded-lg space-x-2">
-              {(['Crawl', 'Walk', 'Run'] as WorkoutMode[]).map(mode => {
-                const getModeIcon = (mode: WorkoutMode) => {
-                  switch (mode) {
-                    case 'Crawl': return <Baby className="mr-2 h-4 w-4" />;
-                    case 'Walk': return <User className="mr-2 h-4 w-4" />;
-                    case 'Run': return <Zap className="mr-2 h-4 w-4" />;
-                  }
-                };
-                
-                const getModeTooltip = (mode: WorkoutMode) => {
-                  switch (mode) {
-                    case 'Crawl': return 'Beginner - Only essential concepts blanked out';
-                    case 'Walk': return 'Intermediate - Fair amount of code to fill in';
-                    case 'Run': return 'Expert - Most code blanked out for maximum challenge';
-                  }
-                };
-                
-                return (
-                  <Button 
-                    key={mode} 
-                    variant={workoutMode === mode ? 'default' : 'ghost'}
-                    onClick={() => setWorkoutMode(mode)}
-                    disabled={isGenerating}
-                    className="flex-1"
-                    title={getModeTooltip(mode)}
-                  >
-                    {isGenerating && workoutMode === mode ? 
-                      <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : 
-                      getModeIcon(mode)
+            {/* Hide workout mode selector for saved drills - users should get exact saved content */}
+            {!isSavedDrill && (
+              <div className="flex justify-center bg-background/30 p-2 rounded-lg space-x-2">
+                {(['Crawl', 'Walk', 'Run'] as WorkoutMode[]).map(mode => {
+                  const getModeIcon = (mode: WorkoutMode) => {
+                    switch (mode) {
+                      case 'Crawl': return <Baby className="mr-2 h-4 w-4" />;
+                      case 'Walk': return <User className="mr-2 h-4 w-4" />;
+                      case 'Run': return <Zap className="mr-2 h-4 w-4" />;
                     }
-                    {mode}
-                  </Button>
-                );
-              })}
-            </div>
+                  };
+                  
+                  const getModeTooltip = (mode: WorkoutMode) => {
+                    switch (mode) {
+                      case 'Crawl': return 'Beginner - Only essential concepts blanked out';
+                      case 'Walk': return 'Intermediate - Fair amount of code to fill in';
+                      case 'Run': return 'Expert - Most code blanked out for maximum challenge';
+                    }
+                  };
+                  
+                  return (
+                    <Button 
+                      key={mode} 
+                      variant={workoutMode === mode ? 'default' : 'ghost'}
+                      onClick={() => setWorkoutMode(mode)}
+                      disabled={isGenerating}
+                      className="flex-1"
+                      title={getModeTooltip(mode)}
+                    >
+                      {isGenerating && workoutMode === mode ? 
+                        <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : 
+                        getModeIcon(mode)
+                      }
+                      {mode}
+                    </Button>
+                  );
+                })}
+              </div>
+            )}
+            
+            {/* Show a message for saved drills explaining they get the exact saved content */}
+            {isSavedDrill && (
+              <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 text-center">
+                <div className="flex items-center justify-center gap-2 text-blue-300">
+                  <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+                    Saved Drill
+                  </Badge>
+                  <span className="text-sm">You're practicing the exact drill you saved from the community</span>
+                </div>
+              </div>
+            )}
             {isGenerating ? <div className="flex justify-center p-12"><LoaderCircle className="h-8 w-8 animate-spin" /></div> : (displayDrill.drill_content || []).map((content, i) => (
               <div key={i} className="p-6 rounded-lg bg-background/50 border">
                 {renderContent(content, i, {

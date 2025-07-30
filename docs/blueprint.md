@@ -1,4 +1,4 @@
-# **App Name**: ML Dojo
+# **App Name**: OmniCode
 
 ## Core Features:
 

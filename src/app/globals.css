@@ -1,3 +1,5 @@
+/* Fonts loaded via Next.js font system in layout.tsx for better reliability */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -31,6 +33,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
     background-image: radial-gradient(circle at 1px 1px, hsl(var(--secondary)) 1px, transparent 0);
@@ -38,9 +41,120 @@
   }
 }
 
+/* Aurora Pro Font Definition - Proper web font cascade */
+@font-face {
+  font-family: 'Aurora Pro';
+  src: url('/fonts/AURORA-PRO.woff2') format('woff2'),
+    url('/fonts/AURORA-PRO.woff') format('woff'),
+    url('/fonts/AURORA-PRO.ttf') format('truetype'),
+    url('/fonts/AURORA-PRO.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+/* Code 7x5 Font Definition - For headings and navigation */
+@font-face {
+  font-family: 'Code 7x5';
+  src: url('/fonts/Code-7x5.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: fallback;
+}
+
+/* Gontserrat ExtraLight Font Definition - For body text and descriptions */
+@font-face {
+  font-family: 'Gontserrat ExtraLight';
+  src: url('/fonts/Gontserrat-ExtraLight.otf') format('opentype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: fallback;
+}
+
+/* Code 7x5 Font Definition - Primary app font */
+@font-face {
+  font-family: 'Code 7x5';
+  src: url('/fonts/Code-7x5.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: fallback;
+}
+
 @layer components {
   .font-headline {
     font-family: 'Fira Sans', sans-serif;
     font-weight: 700;
+  }
+
+  .font-aurora {
+    font-family: 'Aurora Pro', 'Orbitron', 'Exo 2', 'Rajdhani', 'Fira Sans', sans-serif;
+    font-weight: normal;
+  }
+
+  .font-code7x5 {
+    font-family: 'Code 7x5', 'Monaco', 'Consolas', 'monospace';
+    font-weight: normal;
+  }
+
+  .font-gontserrat {
+    font-family: 'Gontserrat ExtraLight', 'Inter', 'system-ui', 'sans-serif';
+    font-weight: 200;
+  }
+
+  .font-code7x5 {
+    font-family: 'Code 7x5', 'Monaco', 'Consolas', 'Courier New', monospace;
+    font-weight: normal;
+  }
+
+  /* Aurora Pro title styling */
+  .aurora-title {
+    font-family: 'Aurora Pro', 'Orbitron', 'Exo 2', 'Rajdhani', 'Fira Sans', sans-serif !important;
+    font-weight: 600 !important;
+    font-style: normal !important;
+    letter-spacing: 0.1em !important;
+    font-size: clamp(3rem, 11vw, 9rem) !important;
+    line-height: 0.9 !important;
+    text-shadow: 0 0 30px rgba(34, 197, 94, 0.5), 0 0 60px rgba(34, 197, 94, 0.3) !important;
+  }
+
+  /* Enhanced skeleton loading animation */
+  .animate-shimmer {
+    background: linear-gradient(90deg, 
+      hsl(var(--muted)) 25%, 
+      hsl(var(--muted-foreground) / 0.1) 50%, 
+      hsl(var(--muted)) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  /* Responsive container improvements */
+  .container-responsive {
+    @apply container mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Performance optimized transitions */
+  .transition-optimized {
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    will-change: transform;
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-shimmer,
+    .animate-pulse,
+    .transition-optimized {
+      animation: none;
+      transition: none;
+    }
   }
 }

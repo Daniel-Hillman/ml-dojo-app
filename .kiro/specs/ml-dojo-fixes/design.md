@@ -2,7 +2,7 @@
 
 ## Overview
 
-The ML Dojo application requires comprehensive fixes to address performance bottlenecks, navigation issues, and AI integration problems. The design focuses on optimizing the application architecture, fixing broken components, and ensuring reliable Firebase and Genkit integration.
+The OmniCode application requires comprehensive fixes to address performance bottlenecks, navigation issues, and AI integration problems. The design focuses on optimizing the application architecture, fixing broken components, and ensuring reliable Firebase and Genkit integration.
 
 ## Architecture
 

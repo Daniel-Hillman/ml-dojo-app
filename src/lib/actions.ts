@@ -280,26 +280,30 @@ ${JSON.stringify(originalContent, null, 2)}
 CRAWL MODE TRANSFORMATION RULES (Like Mimo/Khan Academy for beginners):
 
 For CODE blocks:
-1. MINIMIZE blanks: Only blank out the MOST IMPORTANT concepts (1-2 key blanks max)
-2. Focus on UNIVERSAL, PREDICTABLE blanks:
-   - Variable names that follow clear patterns
-   - Standard function names (print, len, range, etc.)
-   - Common operators (+, -, *, /, ==, etc.)
-   - Standard keywords (if, for, while, def, return)
-   - Logical values (True, False, None)
-3. AVOID blanking:
-   - File paths or URLs (like 'data.csv', 'http://...')
-   - Arbitrary strings that could be anything
-   - Complex expressions that have multiple valid answers
-   - Library-specific parameters that vary by use case
-4. Examples of GOOD blanks:
-   - "name = ____" → solution: "Alice" (clear context)
-   - "for i in ____:" → solution: "range(10)" (standard pattern)
-   - "if x ____ 0:" → solution: ">" (clear comparison)
-5. Examples of BAD blanks to avoid:
-   - "pd.read_csv('____')" → Don't blank filenames
-   - "requests.get('____')" → Don't blank URLs
-   - "model.fit(____)" → Don't blank complex parameters
+1. MINIMIZE blanks: Only blank SYNTAX-CRITICAL elements (1-2 key blanks max)
+2. Focus on ESSENTIAL SYNTAX that developers MUST MEMORIZE:
+   - Property names: "font-____: Arial" → "font-family"
+   - Selectors: "____ { color: red; }" → ".class" or "#id"  
+   - Keywords: "____ (condition):" → "if", "for", "while"
+   - Operators: "x ____ y" → "==", "+=", "!="
+   - Function syntax: "____():" → "def function_name"
+   - Declaration syntax: "____ variable = value" → "let", "const", "var"
+3. NEVER blank ARBITRARY VALUES (creates guessing games):
+   - ❌ DON'T blank: colors, font sizes, margins, padding values
+   - ❌ DON'T blank: file names, URLs, arbitrary strings
+   - ❌ DON'T blank: variable values that could be anything
+   - ❌ DON'T blank: content with multiple valid answers
+4. Examples of EXCELLENT SYNTAX-FOCUSED blanks:
+   - CSS: "____-family: Arial;" → "font" (property name)
+   - CSS: "____ { margin: 10px; }" → ".container" (selector)
+   - Python: "____ name = 'John':" → "def" (function keyword)
+   - JavaScript: "____ element = document.getElementById('id');" → "const"
+   - HTML: "<____ class='btn'>Click</____>" → "button" (tag syntax)
+5. Examples of BAD blanks that create guessing games:
+   - ❌ "background-color: ____;" → Could be any color
+   - ❌ "font-size: ____;" → Could be any size  
+   - ❌ "margin: ____;" → Could be any value
+   - ❌ "name = '____'" → Could be any name
 
 For MCQ blocks:
 1. Make questions very straightforward
@@ -325,18 +329,24 @@ ${JSON.stringify(originalContent, null, 2)}
 WALK MODE TRANSFORMATION RULES (Like W3Schools/standard tutorials):
 
 For CODE blocks:
-1. MODERATE blanks: Create a fair amount of blanks (50-60% of key elements)
-2. Focus on important concepts without overwhelming:
-   - Blank key variable names and values
-   - Blank important function calls
-   - Blank essential operators and keywords
-   - Keep some scaffolding visible for guidance
-3. Examples:
-   - "name = ____" (blank the value)
-   - "____ = Dog(____)" (blank variable and parameter)
-   - "for ____ in range(10):" (blank iterator)
-   - "if x ____ 0:" (blank operator)
-4. Solution array should have clear, standard answers
+1. MODERATE blanks: Focus on SYNTAX + STRUCTURE (not arbitrary values)
+2. Blank ESSENTIAL PROGRAMMING CONCEPTS:
+   - Property names: "text-____: center;" → "align"
+   - Method names: "element.____('click', handler);" → "addEventListener"
+   - Keywords: "____ element in elements:" → "for"
+   - Operators: "count ____ 1" → "+="
+   - Structure: "____ { display: flex; }" → ".container"
+3. PRIORITIZE SYNTAX MEMORIZATION over value guessing:
+   - ✅ GOOD: "____-decoration: none;" → "text" (property name)
+   - ✅ GOOD: "____ { width: 100%; }" → ".full-width" (selector)
+   - ✅ GOOD: "function ____() { return true; }" → "isValid" (naming pattern)
+   - ❌ AVOID: "color: ____;" → arbitrary color values
+   - ❌ AVOID: "width: ____;" → arbitrary size values
+4. Examples of SYNTAX-FOCUSED blanks:
+   - CSS: "____-style: solid;" → "border" (property prefix)
+   - JavaScript: "____('Hello World');" → "console.log" (method)
+   - Python: "____ x in range(10):" → "for" (loop keyword)
+   - HTML: "<____ href='#'>Link</____>" → "a" (tag name)
 
 For MCQ blocks:
 1. Standard difficulty questions
@@ -361,24 +371,26 @@ ${JSON.stringify(originalContent, null, 2)}
 RUN MODE TRANSFORMATION RULES (Like advanced coding challenges):
 
 For CODE blocks:
-1. MAXIMIZE blanks: Blank out MOST of the code (80-90% should be blanks)
-2. Create comprehensive challenges but keep solutions REALISTIC:
-   - Blank entire variable assignments: "____" 
-   - Blank complete function calls: "____"
-   - Blank entire expressions: "____"
-   - Blank control structures: "____"
-3. STILL avoid impossible blanks:
-   - Don't blank arbitrary filenames unless context makes it obvious
-   - Don't blank URLs or paths without clear context
-   - For data files, provide hints like "____" with solution "data.csv" only if it's the standard name
-4. Allow multiple valid answers where appropriate:
-   - Variable names can vary: "data", "df", "dataset" all acceptable
-   - File extensions should be consistent with context
-5. Examples:
-   - "____ = ____" (blank both variable and value)
-   - "for ____ in ____:" (blank iterator and iterable)
-   - "df = pd.read_csv('____')" → only if filename is contextually obvious
-6. Solution array should contain the MOST COMMON/STANDARD answers
+1. MAXIMIZE SYNTAX blanks: Focus on ADVANCED SYNTAX PATTERNS (not values)
+2. Blank COMPLEX PROGRAMMING STRUCTURES:
+   - Method chaining: "element.____().____().show();" → "addClass", "removeClass"
+   - Advanced selectors: "____:____-child(2n+1)" → "tr", "nth"
+   - Function patterns: "____ = (____, ____) => { return ____; };" → "const", "a", "b", "a + b"
+   - Complex properties: "____-____: ____-____;" → "background", "image", "url", "repeat"
+3. ADVANCED SYNTAX FOCUS (not arbitrary values):
+   - ✅ EXCELLENT: "element.____('____', handler);" → "addEventListener", "click"
+   - ✅ EXCELLENT: "____.____(selector)" → "document", "querySelector"
+   - ✅ EXCELLENT: "function* ____() { ____ value; }" → "generator", "yield"
+   - ❌ STILL AVOID: arbitrary colors, sizes, content values
+4. Examples of ADVANCED SYNTAX blanks:
+   - CSS: "@____ screen and (____-width: 768px)" → "media", "max"
+   - JavaScript: "____.____.____('GET', url);" → "xhr", "open", "method"
+   - Python: "____ ClassName(____Class):" → "class", "Parent"
+   - Advanced patterns: "const { ____, ____ } = ____;" → "name", "age", "user"
+5. Challenge STRUCTURE KNOWLEDGE:
+   - Blank entire syntax patterns that test deep understanding
+   - Focus on advanced language features and best practices
+   - Test knowledge of proper naming conventions and patterns
 
 For MCQ blocks:
 1. Add complex scenarios and edge cases
@@ -485,11 +497,26 @@ export async function generateDrillAction(prompt: string) {
         try {
           const { generateWithPersonalKey } = await import('@/lib/ai-client');
           creativeResponse = await generateWithPersonalKey(
-            `You are an expert AI programming tutor. A user wants to create a practice drill. Based on their prompt, generate the content for a drill.
+            `You are an expert AI programming tutor specializing in SYNTAX MEMORIZATION. Create a practice drill that helps developers memorize essential syntax patterns.
 
             User Prompt: "${prompt}"
 
-            Generate the content as plain text. Include a title, concept, difficulty, description, and at least one theory block, one code block, and one MCQ.`
+            CRITICAL: When creating code blocks with blanks (____), focus on SYNTAX-CRITICAL elements that developers must memorize:
+
+            ✅ EXCELLENT blanks (syntax memorization):
+            - Property names: "font-____: Arial;" → "family"
+            - Selectors: "____ { color: red; }" → ".class"
+            - Keywords: "____ element in list:" → "for"
+            - Method names: "element.____('click', fn);" → "addEventListener"
+            - Declaration syntax: "____ name = 'value';" → "const"
+
+            ❌ AVOID these blanks (create guessing games):
+            - Color values: "color: ____;" → any color
+            - Size values: "font-size: ____;" → any size
+            - Arbitrary content: "name = '____';" → any name
+            - File names: "import '____';" → any filename
+
+            Generate content with: title, concept, difficulty, description, theory block, code block (with SYNTAX-focused blanks), and MCQ.`
           );
         } catch (personalKeyError) {
           console.log('Personal API key failed, falling back to Genkit:', personalKeyError);
@@ -497,11 +524,26 @@ export async function generateDrillAction(prompt: string) {
           // Fallback to original Genkit implementation
           const { ai } = await import('@/ai/genkit');
           creativeResponse = await ai.generate(
-            `You are an expert AI programming tutor. A user wants to create a practice drill. Based on their prompt, generate the content for a drill.
+            `You are an expert AI programming tutor specializing in SYNTAX MEMORIZATION. Create a practice drill that helps developers memorize essential syntax patterns.
 
             User Prompt: "${prompt}"
 
-            Generate the content as plain text. Include a title, concept, difficulty, description, and at least one theory block, one code block, and one MCQ.`
+            CRITICAL: When creating code blocks with blanks (____), focus on SYNTAX-CRITICAL elements that developers must memorize:
+
+            ✅ EXCELLENT blanks (syntax memorization):
+            - Property names: "font-____: Arial;" → "family"
+            - Selectors: "____ { color: red; }" → ".class"
+            - Keywords: "____ element in list:" → "for"
+            - Method names: "element.____('click', fn);" → "addEventListener"
+            - Declaration syntax: "____ name = 'value';" → "const"
+
+            ❌ AVOID these blanks (create guessing games):
+            - Color values: "color: ____;" → any color
+            - Size values: "font-size: ____;" → any size
+            - Arbitrary content: "name = '____';" → any name
+            - File names: "import '____';" → any filename
+
+            Generate content with: title, concept, difficulty, description, theory block, code block (with SYNTAX-focused blanks), and MCQ.`
           );
         }
 

@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The ML Dojo application currently has workout mode buttons (Crawl, Walk, Run) that don't actually modify the drill difficulty. All modes display the same content with the full code. Users need different difficulty levels to provide appropriate challenge and learning progression, with Crawl being the easiest (more guidance and less blanks to fill in), Walk being standard, and Run being the most challenging.
+The OmniCode application currently has workout mode buttons (Crawl, Walk, Run) that don't actually modify the drill difficulty. All modes display the same content with the full code. Users need different difficulty levels to provide appropriate challenge and learning progression, with Crawl being the easiest (more guidance and less blanks to fill in), Walk being standard, and Run being the most challenging.
 
 ## Requirements
 

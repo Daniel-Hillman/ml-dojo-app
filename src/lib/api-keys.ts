@@ -13,19 +13,19 @@ export const API_KEY_CONFIGS: ApiKeyConfig[] = [
   {
     id: 'openai',
     name: 'OpenAI API Key',
-    description: 'Required for AI-powered drill generation and code assistance',
-    required: true,
+    description: 'Popular AI provider for drill generation and code assistance',
+    required: false,
   },
   {
     id: 'anthropic',
     name: 'Anthropic API Key',
-    description: 'Alternative AI provider for drill generation (optional)',
+    description: 'Alternative AI provider for drill generation',
     required: false,
   },
   {
     id: 'google',
     name: 'Google AI API Key',
-    description: 'For Google Gemini AI features (optional)',
+    description: 'Google Gemini AI for drill generation and assistance',
     required: false,
   }
 ];
@@ -70,8 +70,8 @@ export function getAllApiKeys(): Record<string, string> {
  * Check if all required API keys are configured
  */
 export function hasRequiredApiKeys(): boolean {
-  const requiredConfigs = API_KEY_CONFIGS.filter(config => config.required);
-  return requiredConfigs.every(config => {
+  // Check if ANY API key is configured (since all are now optional)
+  return API_KEY_CONFIGS.some(config => {
     const key = getApiKey(config.id);
     return key && key.trim().length > 0;
   });

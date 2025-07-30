@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gontserrat Font Test</title>
+    <style>
+        @font-face {
+            font-family: 'Gontserrat ExtraLight';
+            src: url('/fonts/Gontserrat-ExtraLight.otf') format('opentype');
+            font-weight: 200;
+            font-style: normal;
+            font-display: fallback;
+        }
+        
+        @font-face {
+            font-family: 'Code 7x5';
+            src: url('/fonts/Code-7x5.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: fallback;
+        }
+        
+        @font-face {
+            font-family: 'Aurora Pro';
+            src: url('/fonts/AURORA-PRO.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: fallback;
+        }
+        
+        body {
+            background: #0f172a;
+            color: #f1f5f9;
+            padding: 2rem;
+            font-family: system-ui;
+        }
+        
+        .aurora { font-family: 'Aurora Pro', sans-serif; }
+        .code7x5 { font-family: 'Code 7x5', monospace; }
+        .gontserrat { font-family: 'Gontserrat ExtraLight', sans-serif; font-weight: 200; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .section { margin: 2rem 0; padding: 1rem; border: 1px solid #334155; border-radius: 8px; }
+        h1 { color: #22c55e; }
+        h2 { color: #3b82f6; }
+        .description { color: #94a3b8; margin: 0.5rem 0; }
+    </style>
+</head>
+<body>
+    <h1 class="aurora">OmniCode Font Test</h1>
+    
+    <div class="section">
+        <h2 class="code7x5">Code 7x5 - Headings & Navigation</h2>
+        <p class="gontserrat description">This is Gontserrat ExtraLight for descriptions and body text. It should be clean, readable, and not compete with the stylized fonts.</p>
+        <p class="code7x5">Practice Drills • Community • Profile Settings</p>
+    </div>
+    
+    <div class="section">
+        <h2 class="aurora">Aurora Pro - Branding</h2>
+        <p class="gontserrat description">Aurora Pro is used for the main app branding and login page. It has that futuristic, sci-fi aesthetic.</p>
+        <p class="aurora">OMNICODE</p>
+    </div>
+    
+    <div class="section">
+        <h2 class="mono">JetBrains Mono - Code</h2>
+        <p class="gontserrat description">JetBrains Mono remains for all code blocks and syntax highlighting to maintain readability.</p>
+        <pre class="mono">function hello() {
+  console.log("Hello, World!");
+  return true;
+}</pre>
+    </div>
+    
+    <div class="section">
+        <h2 class="code7x5">Font Hierarchy Summary</h2>
+        <ul class="gontserrat">
+            <li><strong class="aurora">Aurora Pro</strong> - Main branding, login page</li>
+            <li><strong class="code7x5">Code 7x5</strong> - Headings, navigation, titles</li>
+            <li><strong class="gontserrat">Gontserrat ExtraLight</strong> - Body text, descriptions, details</li>
+            <li><strong class="mono">JetBrains Mono</strong> - Code blocks, syntax highlighting</li>
+        </ul>
+    </div>
+</body>
+</html>

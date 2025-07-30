@@ -1,6 +1,6 @@
 'use client';
 
-import { FlaskConical, Notebook, PlusSquare, Bot, User, Settings, Key } from 'lucide-react';
+import { FlaskConical, Users, PlusSquare, User, Settings, Key } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -15,14 +15,14 @@ export function Sidebar() {
   const navLinks = [
     { href: '/drills', icon: FlaskConical, label: 'Practice Drills' },
     { href: '/drills/create', icon: PlusSquare, label: 'Custom Drills' },
-    { href: '/notes', icon: Notebook, label: 'Notes' },
-    { href: '/test-genkit', icon: Bot, label: 'Test AI' },
-    { href: '/test-languages', icon: Bot, label: 'Test Languages' },
+    { href: '/community', icon: Users, label: 'Community' },
+    { href: '/test-genkit', icon: FlaskConical, label: 'Test AI' },
+    { href: '/test-languages', icon: FlaskConical, label: 'Test Languages' },
   ];
 
   const footerLinks = [
     { href: '/api-keys', icon: Key, label: 'Personal API' },
-    { href: '/account', icon: User, label: 'Account' },
+    { href: '/profile', icon: User, label: 'Profile' },
     { href: '/settings', icon: Settings, label: 'Settings' },
   ];
 
@@ -39,7 +39,7 @@ export function Sidebar() {
                 )}
               >
                 <Icon className="h-5 w-5" />
-                <span className="text-xs font-medium">{label}</span>
+                <span className="text-xs font-medium font-code7x5">{label}</span>
               </div>
             </Link>
           ))}
@@ -51,11 +51,8 @@ export function Sidebar() {
   return (
     <div className="hidden lg:flex flex-col w-64 shrink-0 h-screen border-r bg-background/80 backdrop-blur-sm">
         <div className="flex items-center h-16 px-6 border-b">
-          <Link href="/" className="flex items-center gap-3 font-semibold">
-            <div className="p-2 rounded-lg bg-primary">
-              <Bot className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-headline">ML Dojo</span>
+          <Link href="/" className="flex items-center font-semibold">
+            <span className="text-2xl font-aurora text-green-400 tracking-wider">OmniCode</span>
           </Link>
         </div>
         <div className="flex-1 overflow-auto py-4">
@@ -65,7 +62,7 @@ export function Sidebar() {
                 key={label}
                 href={href}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-3 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10',
+                  'flex items-center gap-3 rounded-lg px-3 py-3 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10 font-code7x5',
                   pathname.startsWith(href) && 'bg-primary/10 text-primary'
                 )}
               >
@@ -83,7 +80,7 @@ export function Sidebar() {
                     key={label}
                     href={href}
                     className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-3 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10',
+                      'flex items-center gap-3 rounded-lg px-3 py-3 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10 font-code7x5',
                       pathname.startsWith(href) && 'bg-primary/10 text-primary'
                     )}
                   >

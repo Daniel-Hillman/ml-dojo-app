@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The ML Dojo application is currently experiencing critical performance and functionality issues that prevent users from effectively using the platform. The application loads extremely slowly, navigation between pages doesn't work properly, and the "Create Custom Drill" functionality is non-responsive. These issues need to be resolved to provide users with a smooth, responsive learning experience.
+The OmniCode application is currently experiencing critical performance and functionality issues that prevent users from effectively using the platform. The application loads extremely slowly, navigation between pages doesn't work properly, and the "Create Custom Drill" functionality is non-responsive. These issues need to be resolved to provide users with a smooth, responsive learning experience.
 
 ## Requirements
 

@@ -12,12 +12,35 @@ const config = {
   theme: {
     container: {
       center: true,
-      padding: "2rem",
+      padding: {
+        DEFAULT: "1rem",
+        sm: "2rem",
+        lg: "4rem",
+        xl: "5rem",
+        "2xl": "6rem",
+      },
       screens: {
         "2xl": "1400px",
       },
     },
+    screens: {
+      'xs': '475px',
+      'sm': '640px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
+      '2xl': '1536px',
+    },
     extend: {
+      fontFamily: {
+        aurora: ['Aurora Pro', 'Fira Sans', 'sans-serif'],
+        mono: ['var(--font-jetbrains-mono)', 'Fira Code', 'Monaco', 'Consolas', 'monospace'],
+        sans: ['Gontserrat ExtraLight', 'Inter', 'system-ui', 'sans-serif'],
+        inter: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        gontserrat: ['Gontserrat ExtraLight', 'Inter', 'system-ui', 'sans-serif'],
+        headline: ['Code 7x5', 'Monaco', 'Consolas', 'monospace'],
+        'code7x5': ['Code 7x5', 'Monaco', 'Consolas', 'Courier New', 'monospace'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

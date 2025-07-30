@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Eye, EyeOff, Key, Save, AlertCircle, CheckCircle, ExternalLink, Info } from 'lucide-react';
+import { Eye, EyeOff, Key, Save, AlertCircle, CheckCircle, ExternalLink, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ApiKey {
@@ -18,32 +18,57 @@ interface ApiKey {
   placeholder: string;
   required: boolean;
   helpUrl?: string;
+  setupGuide?: string[];
 }
 
 const API_KEYS: ApiKey[] = [
   {
     id: 'openai',
     name: 'OpenAI API Key',
-    description: 'Required for AI-powered drill generation and code assistance',
+    description: 'Popular AI provider for drill generation and code assistance',
     placeholder: 'sk-...',
-    required: true,
-    helpUrl: 'https://platform.openai.com/api-keys'
+    required: false,
+    helpUrl: 'https://platform.openai.com/api-keys',
+    setupGuide: [
+      '1. Go to https://platform.openai.com/api-keys',
+      '2. Sign in or create an OpenAI account',
+      '3. Click "Create new secret key"',
+      '4. Copy the key (starts with "sk-")',
+      '5. Paste it in the field above',
+      '6. Note: You need to add billing info to use the API'
+    ]
   },
   {
     id: 'anthropic',
     name: 'Anthropic API Key',
-    description: 'Alternative AI provider for drill generation (optional)',
+    description: 'Alternative AI provider for drill generation',
     placeholder: 'sk-ant-...',
     required: false,
-    helpUrl: 'https://console.anthropic.com/account/keys'
+    helpUrl: 'https://console.anthropic.com/account/keys',
+    setupGuide: [
+      '1. Go to https://console.anthropic.com/account/keys',
+      '2. Sign in or create an Anthropic account',
+      '3. Click "Create Key"',
+      '4. Copy the key (starts with "sk-ant-")',
+      '5. Paste it in the field above',
+      '6. Note: Anthropic offers free credits for new users'
+    ]
   },
   {
     id: 'google',
     name: 'Google AI API Key',
-    description: 'For Google Gemini AI features (optional)',
+    description: 'Google Gemini AI for drill generation and assistance',
     placeholder: 'AIza...',
     required: false,
-    helpUrl: 'https://makersuite.google.com/app/apikey'
+    helpUrl: 'https://makersuite.google.com/app/apikey',
+    setupGuide: [
+      '1. Go to https://makersuite.google.com/app/apikey',
+      '2. Sign in with your Google account',
+      '3. Click "Create API Key"',
+      '4. Copy the key (starts with "AIza")',
+      '5. Paste it in the field above',
+      '6. Note: Google AI Studio offers generous free usage'
+    ]
   }
 ];
 
@@ -52,6 +77,7 @@ export default function ApiKeysPage() {
   const [visibleKeys, setVisibleKeys] = useState<Record<string, boolean>>({});
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [testResults, setTestResults] = useState<Record<string, 'testing' | 'success' | 'error' | null>>({});
+  const [expandedGuides, setExpandedGuides] = useState<Record<string, boolean>>({});
 
   // Load API keys from localStorage on mount
   useEffect(() => {
@@ -164,6 +190,14 @@ export default function ApiKeysPage() {
     }));
   };
 
+  // Toggle setup guide visibility
+  const toggleSetupGuide = (keyId: string) => {
+    setExpandedGuides(prev => ({
+      ...prev,
+      [keyId]: !prev[keyId]
+    }));
+  };
+
   // Get key status
   const getKeyStatus = (keyId: string) => {
     const key = apiKeys[keyId];
@@ -199,8 +233,8 @@ export default function ApiKeysPage() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Personal API Keys</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-3xl font-bold tracking-tight font-code7x5">Personal API Keys</h1>
+          <p className="text-muted-foreground mt-2 font-gontserrat">
             Configure your personal API keys to enable AI-powered features. Your keys are stored locally and never sent to our servers.
           </p>
         </div>
@@ -287,18 +321,45 @@ export default function ApiKeysPage() {
                     </div>
                   </div>
 
-                  {/* Help Link */}
-                  {keyConfig.helpUrl && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <ExternalLink className="h-4 w-4" />
-                      <a 
-                        href={keyConfig.helpUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="hover:text-primary underline"
+                  {/* Setup Guide Dropdown */}
+                  {keyConfig.setupGuide && (
+                    <div className="border rounded-lg">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => toggleSetupGuide(keyConfig.id)}
+                        className="w-full justify-between p-3 h-auto"
                       >
-                        Get your {keyConfig.name}
-                      </a>
+                        <span className="text-sm font-medium">📋 How to get your {keyConfig.name}</span>
+                        {expandedGuides[keyConfig.id] ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </Button>
+                      
+                      {expandedGuides[keyConfig.id] && (
+                        <div className="px-3 pb-3 border-t">
+                          <ol className="text-sm text-muted-foreground space-y-1 mt-2">
+                            {keyConfig.setupGuide.map((step, index) => (
+                              <li key={index} className="leading-relaxed">
+                                {step}
+                              </li>
+                            ))}
+                          </ol>
+                          <div className="mt-3 pt-2 border-t">
+                            <a 
+                              href={keyConfig.helpUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              Open {keyConfig.name} Dashboard
+                            </a>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -331,7 +392,7 @@ export default function ApiKeysPage() {
         {/* Save Section */}
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h3 className="text-lg font-medium">Save Configuration</h3>
+            <h3 className="text-lg font-medium font-code7x5">Save Configuration</h3>
             <p className="text-sm text-muted-foreground">
               Save all your API keys to local storage
             </p>

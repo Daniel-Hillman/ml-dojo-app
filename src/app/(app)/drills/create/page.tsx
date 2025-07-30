@@ -39,10 +39,11 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { db, auth } from "@/lib/firebase/client";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, doc, getDoc } from "firebase/firestore";
 import { useState } from "react";
 import { LoaderCircle, Sparkles } from "lucide-react";
 import { ApiKeyStatus } from "@/components/ApiKeyStatus";
@@ -128,6 +129,7 @@ export default function CreateDrillPage() {
   const [aiPrompt, setAiPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [shareToComm, setShareToCommunity] = useState(false);
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -208,6 +210,7 @@ export default function CreateDrillPage() {
 
       console.log('Processed drill content:', drillContent);
 
+      // Save to personal drills
       const docRef = await addDoc(collection(db, "drills"), {
         title: values.title,
         concept: values.concept,
@@ -217,6 +220,38 @@ export default function CreateDrillPage() {
         drill_content: drillContent,
         createdAt: new Date(),
       });
+
+      // If sharing to community, also save to community collection
+      if (shareToComm) {
+        // Get user profile for author info
+        const userProfileDoc = await getDoc(doc(db, 'users', user.uid));
+        const userProfile = userProfileDoc.exists() ? userProfileDoc.data() : null;
+        
+        // Determine the primary language from the drill content
+        const codeContent = drillContent.find(content => content.type === 'code');
+        const primaryLanguage = codeContent?.language || 'python';
+        
+        await addDoc(collection(db, "community_drills"), {
+          title: values.title,
+          concept: values.concept,
+          difficulty: values.difficulty,
+          description: values.description,
+          language: primaryLanguage,
+          content: drillContent,
+          authorId: user.uid,
+          authorName: userProfile?.nickname || user.displayName || user.email?.split('@')[0] || 'Anonymous',
+          authorAvatar: userProfile?.avatarUrl || user.photoURL || '',
+          createdAt: new Date(),
+          likes: 0,
+          comments: 0,
+          saves: 0,
+          views: 0,
+          tags: [values.concept.toLowerCase(), primaryLanguage.toLowerCase(), values.difficulty.toLowerCase()],
+          isPublic: true,
+          likedBy: [],
+          savedBy: []
+        });
+      }
 
       console.log('Drill saved with ID:', docRef.id);
 
@@ -245,7 +280,7 @@ export default function CreateDrillPage() {
         </div>
 
         <div className="space-y-4 mb-8">
-            <h2 className="text-2xl font-bold font-headline flex items-center">
+            <h2 className="text-2xl font-bold font-code7x5 flex items-center">
                 <Sparkles className="mr-3 h-6 w-6 text-primary" />
                 Create with AI
             </h2>
@@ -331,7 +366,7 @@ export default function CreateDrillPage() {
         <Separator />
 
         <div>
-          <h3 className="text-lg font-medium">Content</h3>
+          <h3 className="text-lg font-medium font-code7x5">Content</h3>
           <div className="space-y-4">
             {fields.map((field, index) => (
               <div key={field.id} className="p-4 border rounded-md">
@@ -388,6 +423,26 @@ export default function CreateDrillPage() {
           >
             Add MCQ
           </Button>
+        </div>
+
+        {/* Community Sharing Option */}
+        <div className="flex items-center space-x-2 p-4 border rounded-lg bg-muted/50">
+          <Checkbox
+            id="shareToComm"
+            checked={shareToComm}
+            onCheckedChange={setShareToCommunity}
+          />
+          <div className="grid gap-1.5 leading-none">
+            <label
+              htmlFor="shareToComm"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Share with Community
+            </label>
+            <p className="text-xs text-muted-foreground">
+              Make this drill available for other users to discover and practice
+            </p>
+          </div>
         </div>
 
         <div className="flex gap-2">

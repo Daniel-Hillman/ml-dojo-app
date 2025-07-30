@@ -1,0 +1,10 @@
+@font-face {
+  font-family: 'AURORA-PRO';
+  src: url(./AURORA-PRO.eot);
+  src: url(./AURORA-PRO.eot?#iefix) format('embedded-opentype'),
+       url(./AURORA-PRO.woff) format('woff'),
+       url(./AURORA-PRO.woff2) format('woff2'),
+       url(./AURORA-PRO.ttf) format('truetype'),
+       url(./AURORA-PRO.otf) format('otf'),
+       url(./AURORA-PRO.svg#AURORA-PRO) format('svg');
+}
