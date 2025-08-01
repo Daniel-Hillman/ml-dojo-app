@@ -1,6 +1,6 @@
 'use client';
 
-import { FlaskConical, Users, PlusSquare, User, Settings, Key } from 'lucide-react';
+import { FlaskConical, Users, PlusSquare, User, Settings, Key, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -15,9 +15,8 @@ export function Sidebar() {
   const navLinks = [
     { href: '/drills', icon: FlaskConical, label: 'Practice Drills' },
     { href: '/drills/create', icon: PlusSquare, label: 'Custom Drills' },
+    { href: '/learn', icon: BookOpen, label: 'Code Examples' },
     { href: '/community', icon: Users, label: 'Community' },
-    { href: '/test-genkit', icon: FlaskConical, label: 'Test AI' },
-    { href: '/test-languages', icon: FlaskConical, label: 'Test Languages' },
   ];
 
   const footerLinks = [
