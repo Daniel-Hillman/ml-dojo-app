@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { PlusCircle, History, Users } from 'lucide-react';
+import { PlusCircle, History, Users, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { db, auth } from '@/lib/firebase/client';
 import { collection, getDocs, query, where } from 'firebase/firestore';
@@ -30,6 +30,9 @@ import { StatsCards } from '@/components/StatsCards';
 import { useToast } from '@/hooks/use-toast';
 import { GlobalErrorState, AuthErrorState, NetworkErrorState } from '@/components/GlobalErrorState';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { FloatingActionButton, useFloatingActionKeyboard } from '@/components/FloatingActionButton';
+import { WelcomeBanner, useWelcomeBanner } from '@/components/onboarding/WelcomeBanner';
+import { OnboardingTour, useOnboarding } from '@/components/onboarding/OnboardingTour';
 
 export type DrillContent = {
   id: string;
@@ -76,6 +79,13 @@ export default function DrillsPage() {
   
   const [user] = useAuthState(auth);
   const { toast } = useToast();
+
+  // Enable floating action button keyboard shortcuts
+  useFloatingActionKeyboard();
+
+  // Onboarding and welcome banner
+  const welcomeBanner = useWelcomeBanner();
+  const onboarding = useOnboarding('main');
 
   // Keyboard navigation support
   const handleKeyDown = React.useCallback((event: KeyboardEvent) => {
@@ -512,6 +522,16 @@ export default function DrillsPage() {
               role="navigation"
               aria-label="Main navigation"
             >
+              <Link href="/playground" className="w-full sm:w-auto">
+                <Button 
+                  variant="outline"
+                  className="w-full sm:w-auto bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 text-blue-700 hover:from-blue-100 hover:to-purple-100"
+                  aria-label="Try live code execution in the playground"
+                >
+                  <Play className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Try Live Code
+                </Button>
+              </Link>
               <Link href="/community" className="w-full sm:w-auto">
                 <Button 
                   variant="outline"
@@ -560,6 +580,17 @@ export default function DrillsPage() {
           <div className="mb-6">
             <ApiKeyStatus showDetails={false} />
           </div>
+
+          {/* Welcome Banner for New Users */}
+          {welcomeBanner.isVisible && (
+            <div className="mb-6">
+              <WelcomeBanner
+                userName={user?.displayName || undefined}
+                onStartTour={onboarding.startTour}
+                onDismiss={welcomeBanner.dismissBanner}
+              />
+            </div>
+          )}
           
           {/* Stats Cards */}
           <StatsCards
@@ -646,6 +677,18 @@ export default function DrillsPage() {
             {(drill) => <DrillCard drill={drill} onRemoveSaved={handleRemoveSavedDrill} />}
           </DrillSection>
         </main>
+
+        {/* Floating Action Button */}
+        <FloatingActionButton primaryAction="playground" />
+
+        {/* Onboarding Tour */}
+        <OnboardingTour
+          steps={[]} // Will use default steps
+          isOpen={onboarding.isOpen}
+          onClose={onboarding.closeTour}
+          onComplete={onboarding.completeTour}
+          tourId="main"
+        />
       </div>
     </ErrorBoundary>
   );

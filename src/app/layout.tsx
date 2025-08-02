@@ -30,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning={true}>
       <head>
         {/* Preload Aurora Pro font to prevent font swapping issues */}
         <link
@@ -65,7 +65,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      <body className={`font-sans antialiased ${jetbrainsMono.variable} ${inter.variable}`}>
+      <body className={`font-sans antialiased ${jetbrainsMono.variable} ${inter.variable}`} suppressHydrationWarning={true}>
         <AuthProvider>
           {children}
           <Toaster />

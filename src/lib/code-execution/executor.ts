@@ -20,7 +20,7 @@ import {
   RegexExecutionEngine
 } from './engines';
 import { securityManager } from './security';
-import { resourceMonitor } from './resource-monitor';
+import { getResourceMonitor } from './resource-monitor';
 import { maliciousCodeDetector } from './malicious-code-detector';
 import { executionManager } from './execution-controller';
 import { performanceMetrics } from './performance-metrics';
@@ -91,7 +91,7 @@ export class UniversalCodeExecutor {
       }
       
       // Check concurrent execution limits
-      if (!resourceMonitor.canStartExecution(request.language)) {
+      if (!getResourceMonitor().canStartExecution(request.language)) {
         return {
           success: false,
           error: 'Concurrent execution limit exceeded. Please wait for current executions to complete.',
@@ -101,7 +101,7 @@ export class UniversalCodeExecutor {
       }
       
       // Start resource monitoring
-      resourceMonitor.startExecution(executionId, request.language);
+      getResourceMonitor().startExecution(executionId, request.language);
       
       // Start performance metrics collection
       performanceMetrics.startExecution(executionId, request.language, request.code.length);
@@ -129,7 +129,7 @@ export class UniversalCodeExecutor {
       );
       
       // End resource monitoring
-      const resourceMetrics = resourceMonitor.endExecution(executionId, result.success);
+      const resourceMetrics = getResourceMonitor().endExecution(executionId, result.success);
       
       // End performance metrics collection
       const performanceData = performanceMetrics.endExecution(
@@ -156,7 +156,7 @@ export class UniversalCodeExecutor {
       
     } catch (error) {
       // End monitoring on error
-      resourceMonitor.endExecution(executionId, false);
+      getResourceMonitor().endExecution(executionId, false);
       performanceMetrics.endExecution(
         executionId,
         false,

@@ -50,7 +50,7 @@ export class ResourceMonitor {
 
   private initializeMonitoring(): void {
     // Set up Performance Observer for monitoring
-    if ('PerformanceObserver' in window) {
+    if (typeof window !== 'undefined' && 'PerformanceObserver' in window) {
       try {
         this.performanceObserver = new PerformanceObserver((list) => {
           const entries = list.getEntries();
@@ -116,7 +116,7 @@ export class ResourceMonitor {
     this.activeExecutions.set(id, metrics);
 
     // Start performance measurement
-    if ('performance' in window && 'mark' in performance) {
+    if (typeof window !== 'undefined' && 'performance' in window && 'mark' in performance) {
       performance.mark(`code-execution-${id}-start`);
     }
 
@@ -143,7 +143,7 @@ export class ResourceMonitor {
     metrics.resourceUsage.executionTime = metrics.endTime - metrics.startTime;
 
     // End performance measurement
-    if ('performance' in window && 'mark' in performance && 'measure' in performance) {
+    if (typeof window !== 'undefined' && 'performance' in window && 'mark' in performance && 'measure' in performance) {
       try {
         performance.mark(`code-execution-${id}-end`);
         performance.measure(
@@ -349,5 +349,5 @@ export class ResourceMonitor {
   }
 }
 
-// Export singleton instance
-export const resourceMonitor = ResourceMonitor.getInstance();
+// Export singleton instance getter (lazy initialization)
+export const getResourceMonitor = () => ResourceMonitor.getInstance();

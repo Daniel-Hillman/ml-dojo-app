@@ -290,6 +290,8 @@ export default function LiveCodeDemoPage() {
           height="500px"
           showLanguageSelector={true}
           showControls={true}
+          showTemplateButton={true}
+          showBlankTemplates={true}
           onLanguageChange={handleLanguageChange}
           onExecutionComplete={handleExecutionComplete}
           className="w-full"

@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Heart, MessageCircle, Bookmark, Share2, Star, Clock, TrendingUp, 
-  Filter, Search, Code, User, Calendar, ThumbsUp, Eye, BookmarkPlus
+  Filter, Search, Code, User, Calendar, ThumbsUp, Eye, BookmarkPlus, Play
 } from 'lucide-react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase/client';
@@ -312,6 +312,15 @@ export default function CommunityPage() {
             </p>
           </div>
           <div className="flex gap-3">
+            <Link href="/playground">
+              <Button 
+                variant="outline"
+                className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 text-blue-700 hover:from-blue-100 hover:to-purple-100"
+              >
+                <Play className="mr-2 h-4 w-4" />
+                Try Live Code
+              </Button>
+            </Link>
             <Link href="/drills">
               <Button variant="outline">
                 <User className="mr-2 h-4 w-4" />

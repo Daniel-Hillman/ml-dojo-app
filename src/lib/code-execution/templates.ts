@@ -1482,10 +1482,19 @@ fi`,
   }
 ];
 
+// TypeScript Templates (modified from JavaScript templates)
+const TYPESCRIPT_TEMPLATES: CodeTemplate[] = JAVASCRIPT_TEMPLATES.map(template => ({
+  ...template,
+  id: template.id.replace('js-', 'ts-'),
+  code: template.code.includes('console.log') ? 
+    template.code : 
+    `// TypeScript version\n${template.code}`,
+}));
+
 // Export all templates organized by language
 export const LANGUAGE_TEMPLATES: Record<SupportedLanguage, CodeTemplate[]> = {
   javascript: JAVASCRIPT_TEMPLATES,
-  typescript: JAVASCRIPT_TEMPLATES, // TypeScript can use JS examples
+  typescript: TYPESCRIPT_TEMPLATES,
   html: HTML_TEMPLATES,
   css: CSS_TEMPLATES,
   python: PYTHON_TEMPLATES,

@@ -47,6 +47,8 @@ import { collection, addDoc, doc, getDoc } from "firebase/firestore";
 import { useState } from "react";
 import { LoaderCircle, Sparkles } from "lucide-react";
 import { ApiKeyStatus } from "@/components/ApiKeyStatus";
+import { LiveCodeBlock } from "@/components/LiveCodeBlock";
+import { DrillCreationHelp } from "@/components/tooltips/ContextualHelp";
 
 const contentSchema = z.union([
   z.object({
@@ -346,6 +348,12 @@ export default function CreateDrillPage() {
             </FormItem>
           )}
         />
+
+        {/* Contextual Help Section */}
+        <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">Need Help?</h4>
+          <DrillCreationHelp />
+        </div>
         <FormField
           control={form.control}
           name="description"
@@ -518,6 +526,8 @@ function CodeContentControl({
   });
 
   const currentLanguage = form.watch(`content.${index}.language`) || 'python';
+  const currentCode = form.watch(`content.${index}.value`) || '';
+  const [showPreview, setShowPreview] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -575,6 +585,29 @@ function CodeContentControl({
           </FormItem>
         )}
       />
+
+      {/* Live Code Preview */}
+      <div className="border rounded-lg p-4 bg-muted/50">
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="text-sm font-medium">Live Preview</h4>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setShowPreview(!showPreview)}
+          >
+            {showPreview ? 'Hide Preview' : 'Show Preview'}
+          </Button>
+        </div>
+        {showPreview && currentCode && (
+          <LiveCodeBlock
+            code={currentCode}
+            language={currentLanguage}
+            showLineNumbers={true}
+            editable={false}
+          />
+        )}
+      </div>
       
       <div>
         <FormLabel>Solutions</FormLabel>

@@ -6,12 +6,12 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { codeExecutor } from '../index';
 import { executionManager } from '../execution-controller';
-import { resourceMonitor } from '../resource-monitor';
+import { getResourceMonitor } from '../resource-monitor';
 
 describe('Load Testing Suite', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    resourceMonitor.reset?.();
+    getResourceMonitor().reset?.();
   });
 
   afterEach(() => {

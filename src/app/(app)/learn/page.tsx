@@ -21,11 +21,16 @@ import {
   SupportedLanguage,
   LANGUAGE_TEMPLATES
 } from '@/lib/code-execution/templates';
+import { FloatingActionButton, useFloatingActionKeyboard } from '@/components/FloatingActionButton';
+import Link from 'next/link';
 
 export default function LearnPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<CodeTemplate | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>('javascript');
   const [activeSection, setActiveSection] = useState<'browse' | 'learn' | 'practice'>('browse');
+
+  // Enable floating action button keyboard shortcuts
+  useFloatingActionKeyboard();
 
   const handleTemplateSelect = (template: CodeTemplate) => {
     setSelectedTemplate(template);
@@ -103,6 +108,16 @@ export default function LearnPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Link href="/playground">
+            <Button 
+              variant="outline"
+              size="sm"
+              className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 text-blue-700 hover:from-blue-100 hover:to-purple-100"
+            >
+              <Play className="w-4 h-4 mr-2" />
+              Try Live Code
+            </Button>
+          </Link>
           <Button 
             variant={activeSection === 'browse' ? 'default' : 'outline'}
             onClick={() => setActiveSection('browse')}
@@ -270,6 +285,9 @@ export default function LearnPage() {
           </div>
         </div>
       )}
+
+      {/* Floating Action Button */}
+      <FloatingActionButton primaryAction="playground" />
     </div>
   );
 }

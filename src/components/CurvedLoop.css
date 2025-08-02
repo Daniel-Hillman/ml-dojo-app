@@ -1,0 +1,39 @@
+.curved-loop-jacket {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+}
+
+.curved-loop-svg {
+  user-select: none;
+  width: 100%;
+  aspect-ratio: 100 / 12;
+  overflow: visible;
+  display: block;
+  font-size: 3rem;
+  fill: #22c55e;
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 1;
+  filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.5));
+}
+
+/* Login page specific styling */
+.login-curved-text {
+  fill: #22c55e;
+  opacity: 0.9;
+  font-size: 2.2rem;
+  font-family: 'Code 7x5', 'JetBrains Mono', monospace;
+  font-weight: 400;
+  filter: drop-shadow(0 0 12px rgba(34, 197, 94, 0.4)) drop-shadow(0 0 4px rgba(34, 197, 94, 0.6));
+  transition: opacity 0.3s ease;
+}
+
+.login-curved-text:hover {
+  opacity: 1;
+}

@@ -10,6 +10,9 @@ import {
   CodeExecutionResult,
   getLanguageConfig 
 } from '@/lib/code-execution';
+import { getBlankTemplates, getDefaultBlankTemplate } from '@/lib/code-execution/blank-templates';
+import { ClientOnlySyntaxHighlightedEditor } from './ClientOnly';
+import { TemplateBrowser } from './TemplateBrowser';
 import { Button } from '@/components/ui/button';
 import { 
   Select, 
@@ -18,6 +21,21 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -33,7 +51,10 @@ import {
   CheckCircle,
   Clock,
   BookOpen,
-  Code
+  Code,
+  FileText,
+  ChevronDown,
+  Sparkles
 } from 'lucide-react';
 
 interface LiveCodeBlockProps {
@@ -45,6 +66,7 @@ interface LiveCodeBlockProps {
   showLanguageSelector?: boolean;
   showControls?: boolean;
   showTemplateButton?: boolean;
+  showBlankTemplates?: boolean;
   onCodeChange?: (code: string) => void;
   onExecutionComplete?: (result: CodeExecutionResult) => void;
   onLanguageChange?: (language: SupportedLanguage) => void;
@@ -61,6 +83,7 @@ export const LiveCodeBlock: React.FC<LiveCodeBlockProps> = ({
   showLanguageSelector = true,
   showControls = true,
   showTemplateButton = false,
+  showBlankTemplates = true,
   onCodeChange,
   onExecutionComplete,
   onLanguageChange,
@@ -74,8 +97,8 @@ export const LiveCodeBlock: React.FC<LiveCodeBlockProps> = ({
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeTab, setActiveTab] = useState<'console' | 'preview' | 'errors'>('console');
+  const [showTemplateBrowser, setShowTemplateBrowser] = useState(false);
   
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const outputRef = useRef<HTMLDivElement>(null);
   const iframeContainerRef = useRef<HTMLDivElement>(null);
 
@@ -106,6 +129,17 @@ export const LiveCodeBlock: React.FC<LiveCodeBlockProps> = ({
     
     onLanguageChange?.(newLanguage);
   }, [code, currentLanguage, handleCodeChange, onLanguageChange]);
+
+  // Handle blank template selection
+  const handleBlankTemplate = useCallback((templateCode: string) => {
+    handleCodeChange(templateCode);
+  }, [handleCodeChange]);
+
+  // Handle template browser selection
+  const handleTemplateBrowserSelect = useCallback((template: any) => {
+    handleCodeChange(template.code);
+    setShowTemplateBrowser(false);
+  }, [handleCodeChange]);
 
   // Execute code
   const executeCode = useCallback(async () => {
@@ -374,6 +408,55 @@ export const LiveCodeBlock: React.FC<LiveCodeBlockProps> = ({
                 </SelectContent>
               </Select>
             )}
+
+            {/* Blank Templates Dropdown */}
+            {showBlankTemplates && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <FileText className="w-4 h-4 mr-2" />
+                    New
+                    <ChevronDown className="w-4 h-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuLabel>Blank Templates</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {getBlankTemplates(currentLanguage).map((template) => (
+                    <DropdownMenuItem
+                      key={template.name}
+                      onClick={() => handleBlankTemplate(template.code)}
+                    >
+                      <Code className="w-4 h-4 mr-2" />
+                      {template.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            {/* Template Browser */}
+            {showTemplateButton && (
+              <Dialog open={showTemplateBrowser} onOpenChange={setShowTemplateBrowser}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Templates
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-6xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Code Templates</DialogTitle>
+                  </DialogHeader>
+                  <TemplateBrowser
+                    language={currentLanguage}
+                    onTemplateSelect={handleTemplateBrowserSelect}
+                    showLanguageFilter={true}
+                    compact={false}
+                  />
+                </DialogContent>
+              </Dialog>
+            )}
             
             <Button
               onClick={executeCode}
@@ -400,13 +483,15 @@ export const LiveCodeBlock: React.FC<LiveCodeBlockProps> = ({
             <div className="border-r">
               <div className="relative" style={{ height }}>
                 {allowEdit ? (
-                  <textarea
-                    ref={textareaRef}
+                  <ClientOnlySyntaxHighlightedEditor
                     value={code}
-                    onChange={(e) => handleCodeChange(e.target.value)}
-                    className="absolute inset-0 w-full h-full p-4 font-mono text-sm bg-gray-900 text-gray-100 border-none outline-none resize-none"
+                    onChange={handleCodeChange}
+                    language={currentLanguage}
+                    height={height}
+                    theme="dark"
                     placeholder={`Enter ${languageConfig.name} code here...`}
-                    spellCheck={false}
+                    onExecute={executeCode}
+                    className="w-full h-full"
                   />
                 ) : (
                   <SyntaxHighlighter

@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useToast } from "@/hooks/use-toast";
 // Removed Bot icon import for cleaner title design
 import FaultyTerminal from "@/components/FaultyTerminal";
+import CurvedLoop from "@/components/CurvedLoop";
 // Removed FontTest import - font is working perfectly now
 
 export default function LoginPage() {
@@ -153,7 +154,17 @@ export default function LoginPage() {
         </Card>
       </div>
 
-
+      {/* Animated Languages Display at Bottom */}
+      <div className="absolute bottom-0 left-0 right-0 z-20">
+        <CurvedLoop
+          marqueeText="JavaScript ✦ TypeScript ✦ Python ✦ HTML ✦ CSS ✦ SQL ✦ JSON ✦ YAML ✦ Markdown ✦ Regex ✦ Bash ✦ React ✦ Node.js ✦ Express ✦ MongoDB ✦ PostgreSQL ✦ Docker ✦ Kubernetes ✦ AWS ✦ Git ✦ Linux ✦"
+          speed={1.2}
+          curveAmount={90}
+          direction="left"
+          interactive={true}
+          className="login-curved-text"
+        />
+      </div>
     </div>
   );
 }
