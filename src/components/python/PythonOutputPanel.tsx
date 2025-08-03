@@ -202,15 +202,15 @@ plt.show()`)}
         </div>
         
         <div 
-          className="border rounded-lg overflow-auto bg-white relative plot-container"
+          className="border rounded-lg overflow-auto bg-card relative plot-container"
           style={{ maxHeight }}
         >
           <div 
-            className="p-4"
+            className="p-4 bg-card"
             dangerouslySetInnerHTML={{ __html: result.visualOutput }}
           />
           
-          {/* Enhanced styling for plots */}
+          {/* Enhanced styling for plots with theme support */}
           <style jsx>{`
             .plot-container :global(img) {
               max-width: 100%;
@@ -218,21 +218,26 @@ plt.show()`)}
               border-radius: 0.375rem;
               box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
               margin: 1rem 0;
+              background-color: hsl(var(--card));
+              padding: 1rem;
             }
             .plot-container :global(h4) {
               margin: 1.5rem 0 0.75rem 0;
               font-weight: 600;
-              color: #374151;
+              color: hsl(var(--foreground));
               font-size: 1.1rem;
             }
             .plot-container :global(.space-y-4 > div) {
               margin-bottom: 2rem;
             }
+            .plot-container :global(.matplotlib-figure) {
+              background-color: hsl(var(--card)) !important;
+            }
           `}</style>
         </div>
 
         {/* Plot enhancement tools */}
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-card border">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
@@ -345,15 +350,15 @@ print(df.info())`)}
         </div>
         
         <div 
-          className="border rounded-lg overflow-auto bg-white relative data-container"
+          className="border rounded-lg overflow-auto bg-card relative data-container"
           style={{ maxHeight }}
         >
           <div 
-            className="p-4"
+            className="p-4 bg-card"
             dangerouslySetInnerHTML={{ __html: result.visualOutput }}
           />
           
-          {/* Enhanced styling for data tables */}
+          {/* Enhanced styling for data tables with theme support */}
           <style jsx>{`
             .data-container :global(table) {
               width: 100%;
@@ -361,35 +366,37 @@ print(df.info())`)}
               margin: 1rem 0;
               font-size: 0.875rem;
               box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+              background-color: hsl(var(--card));
+              color: hsl(var(--foreground));
             }
             .data-container :global(th),
             .data-container :global(td) {
               padding: 0.75rem 0.5rem;
               text-align: left;
-              border: 1px solid #e5e7eb;
+              border: 1px solid hsl(var(--border));
             }
             .data-container :global(th) {
-              background-color: #f8fafc;
+              background-color: hsl(var(--muted));
               font-weight: 600;
-              color: #374151;
+              color: hsl(var(--muted-foreground));
               position: sticky;
               top: 0;
               z-index: 1;
             }
             .data-container :global(tr:nth-child(even)) {
-              background-color: #f9fafb;
+              background-color: hsl(var(--muted) / 0.5);
             }
             .data-container :global(tr:hover) {
-              background-color: #f3f4f6;
+              background-color: hsl(var(--accent));
             }
             .data-container :global(h4) {
               margin: 1.5rem 0 0.75rem 0;
               font-weight: 600;
-              color: #374151;
+              color: hsl(var(--foreground));
               font-size: 1.1rem;
               padding: 0.5rem;
-              background-color: #f8fafc;
-              border-left: 4px solid #3b82f6;
+              background-color: hsl(var(--muted));
+              border-left: 4px solid hsl(var(--primary));
             }
             .data-container :global(.space-y-4 > div) {
               margin-bottom: 2rem;
@@ -398,7 +405,7 @@ print(df.info())`)}
         </div>
 
         {/* Data analysis tools */}
-        <Card className="bg-green-50 border-green-200">
+        <Card className="bg-card border">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Zap className="w-4 h-4" />
@@ -528,7 +535,7 @@ print(df.info())`)}
 
         {/* Python-specific error suggestions */}
         {isSyntaxError && (
-          <Card className="bg-blue-50 border-blue-200">
+          <Card className="bg-card border">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Info className="w-4 h-4" />
@@ -536,21 +543,21 @@ print(df.info())`)}
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-              <p className="text-blue-700 text-sm mb-3">
+              <p className="text-foreground text-sm mb-3">
                 Common Python syntax issues and fixes:
               </p>
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between">
                   <span>Missing colon after if/for/def:</span>
-                  <code className="bg-blue-100 px-2 py-1 rounded">if condition:</code>
+                  <code className="bg-muted px-2 py-1 rounded">if condition:</code>
                 </div>
                 <div className="flex justify-between">
                   <span>Incorrect indentation:</span>
-                  <code className="bg-blue-100 px-2 py-1 rounded">Use 4 spaces</code>
+                  <code className="bg-muted px-2 py-1 rounded">Use 4 spaces</code>
                 </div>
                 <div className="flex justify-between">
                   <span>Unmatched parentheses:</span>
-                  <code className="bg-blue-100 px-2 py-1 rounded">print("hello")</code>
+                  <code className="bg-muted px-2 py-1 rounded">print("hello")</code>
                 </div>
               </div>
             </CardContent>
@@ -572,23 +579,23 @@ print(df.info())`)}
 
         {/* Execution stats */}
         <div className="grid grid-cols-2 gap-4">
-          <Card className="bg-blue-50 border-blue-200">
+          <Card className="bg-card border">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Zap className="w-4 h-4 text-blue-600" />
-                <span className="font-medium text-blue-800 text-sm">Execution Time</span>
+                <span className="font-medium text-foreground text-sm">Execution Time</span>
               </div>
-              <p className="text-2xl font-bold text-blue-900">{result.executionTime}ms</p>
+              <p className="text-2xl font-bold text-foreground">{result.executionTime}ms</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-green-50 border-green-200">
+          <Card className="bg-card border">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Database className="w-4 h-4 text-green-600" />
-                <span className="font-medium text-green-800 text-sm">Memory Usage</span>
+                <span className="font-medium text-foreground text-sm">Memory Usage</span>
               </div>
-              <p className="text-2xl font-bold text-green-900">
+              <p className="text-2xl font-bold text-foreground">
                 {result.memoryUsage ? `${(result.memoryUsage / 1024 / 1024).toFixed(1)}MB` : 'N/A'}
               </p>
             </CardContent>

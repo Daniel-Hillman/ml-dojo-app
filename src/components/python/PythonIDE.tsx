@@ -183,7 +183,7 @@ export const PythonIDE: React.FC<PythonIDEProps> = ({
                   disabled={!code.trim()}
                   variant={isExecuting ? "destructive" : "default"}
                   size="sm"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   {isExecuting ? (
                     <>

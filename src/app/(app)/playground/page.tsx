@@ -14,39 +14,91 @@ import {
   BarChart3,
   Lightbulb
 } from 'lucide-react';
-import { LiveCodeBlock } from '@/components/LiveCodeBlock';
-import { TemplateBrowser } from '@/components/TemplateBrowser';
+// Lazy load heavy components for better performance
+const LiveCodeBlock = dynamic(() => import('@/components/LiveCodeBlock').then(mod => ({ default: mod.LiveCodeBlock })), {
+  loading: () => (
+    <div className="flex items-center justify-center h-96 border rounded-lg">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Loading code editor...</p>
+      </div>
+    </div>
+  ),
+  ssr: false
+});
+
+const TemplateBrowser = dynamic(() => import('@/components/TemplateBrowser'), {
+  loading: () => (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    </div>
+  ),
+  ssr: false
+});
 import dynamic from 'next/dynamic';
 
-// Dynamically import Python IDE to avoid SSR issues
+// Dynamically import Python IDE with retry logic
 const PythonIDE = dynamic(
-  () => import('@/components/python/PythonIDE')
-    .then(mod => ({ default: mod.PythonIDE }))
-    .catch(error => {
-      console.error('Failed to load PythonIDE:', error);
-      // Return a fallback component
-      return {
-        default: ({ initialCode, height, showDataInspector, className }: any) => (
-          <div className={`flex items-center justify-center border rounded-lg bg-red-50 dark:bg-red-950/20 ${className}`} style={{ height }}>
-            <div className="text-center p-6">
-              <div className="text-red-600 dark:text-red-400 mb-2">
-                Failed to load Python IDE
+  () => {
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    const loadWithRetry = async (): Promise<any> => {
+      try {
+        const mod = await import('@/components/python/PythonIDE');
+        return { default: mod.PythonIDE };
+      } catch (error) {
+        console.error(`Failed to load PythonIDE (attempt ${retryCount + 1}):`, error);
+        
+        if (retryCount < maxRetries) {
+          retryCount++;
+          // Wait a bit before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+          return loadWithRetry();
+        }
+        
+        // Return a comprehensive fallback component after all retries failed
+        return {
+          default: ({ initialCode, height, showDataInspector, className }: any) => (
+            <div className={`flex items-center justify-center border rounded-lg bg-yellow-50 dark:bg-yellow-950/20 ${className}`} style={{ height }}>
+              <div className="text-center p-6 max-w-md">
+                <div className="text-yellow-600 dark:text-yellow-400 mb-3">
+                  <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  Python IDE Unavailable
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  The Python IDE failed to load after multiple attempts. This might be due to a network issue or the component being temporarily unavailable.
+                </p>
+                <div className="space-y-2">
+                  <button 
+                    onClick={() => window.location.reload()} 
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+                  >
+                    Refresh Page
+                  </button>
+                  <p className="text-xs text-gray-500">
+                    You can still use other language tabs in the playground
+                  </p>
+                </div>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Please refresh the page to try again
-              </p>
             </div>
-          </div>
-        )
-      };
-    }),
+          )
+        };
+      }
+    };
+    
+    return loadWithRetry();
+  },
   {
     ssr: false,
     loading: () => (
       <div className="flex items-center justify-center h-96 border rounded-lg">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading IDE...</p>
+          <p className="text-muted-foreground">Loading Python IDE...</p>
+          <p className="text-xs text-gray-500 mt-2">This may take a moment</p>
         </div>
       </div>
     )
@@ -215,28 +267,28 @@ export default function PlaygroundPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+            <div className="flex items-center gap-3 p-3 bg-card border rounded-lg hover:bg-accent/50 transition-colors">
               <Code className="w-5 h-5 text-blue-600" />
               <div>
                 <h3 className="font-medium">Live Execution</h3>
                 <p className="text-sm text-muted-foreground">Run code instantly</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+            <div className="flex items-center gap-3 p-3 bg-card border rounded-lg hover:bg-accent/50 transition-colors">
               <BookOpen className="w-5 h-5 text-green-600" />
               <div>
                 <h3 className="font-medium">Code Templates</h3>
                 <p className="text-sm text-muted-foreground">Ready-to-use examples</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
+            <div className="flex items-center gap-3 p-3 bg-card border rounded-lg hover:bg-accent/50 transition-colors">
               <Database className="w-5 h-5 text-purple-600" />
               <div>
                 <h3 className="font-medium">Data Analysis</h3>
                 <p className="text-sm text-muted-foreground">Python data tools</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg">
+            <div className="flex items-center gap-3 p-3 bg-card border rounded-lg hover:bg-accent/50 transition-colors">
               <BarChart3 className="w-5 h-5 text-orange-600" />
               <div>
                 <h3 className="font-medium">Visualizations</h3>

@@ -31,7 +31,7 @@ import { markdown } from '@codemirror/lang-markdown';
 import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 import { notFound } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { debounce } from 'lodash';
+import { debounce } from '@/lib/debounce';
 import { calculateNextReviewDate } from '@/lib/srs';
 import { generateDynamicDrill } from '@/lib/actions';
 import { useAuthState } from 'react-firebase-hooks/auth';

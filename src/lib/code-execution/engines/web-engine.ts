@@ -224,38 +224,118 @@ export class WebExecutionEngine implements ExecutionEngine {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HTML Live Preview</title>
     <style>
+        /* Dark mode theme to match the application */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             margin: 20px; 
             line-height: 1.6;
-            color: #333;
+            background-color: #0f172a;
+            color: #e2e8f0;
         }
-        /* Enhanced default styles for better preview */
-        h1, h2, h3, h4, h5, h6 { color: #2c3e50; margin-top: 0; }
+        
+        /* Enhanced default styles for dark mode preview */
+        h1, h2, h3, h4, h5, h6 { 
+            color: #f1f5f9; 
+            margin-top: 0; 
+        }
+        
         button { 
             padding: 8px 16px; 
-            border: 1px solid #ddd; 
+            border: 1px solid #475569; 
             border-radius: 4px; 
-            background: #f8f9fa; 
+            background: #1e293b; 
+            color: #e2e8f0;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
         }
-        button:hover { background: #e9ecef; }
+        button:hover { 
+            background: #334155; 
+            border-color: #64748b;
+        }
+        
         input, textarea, select { 
             padding: 8px; 
-            border: 1px solid #ddd; 
+            border: 1px solid #475569; 
             border-radius: 4px; 
             font-family: inherit;
+            background: #1e293b;
+            color: #e2e8f0;
         }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #f8f9fa; font-weight: 600; }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+        
+        table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            border: 1px solid #475569;
+        }
+        th, td { 
+            padding: 8px; 
+            text-align: left; 
+            border-bottom: 1px solid #475569; 
+        }
+        th { 
+            background-color: #1e293b; 
+            font-weight: 600; 
+            color: #f1f5f9;
+        }
+        
         .interactive-demo { 
             padding: 15px; 
-            background: #f8f9fa; 
+            background: #1e293b; 
             border-radius: 6px; 
             margin: 10px 0;
-            border-left: 4px solid #007acc;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        /* Links */
+        a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+        a:hover {
+            color: #93c5fd;
+            text-decoration: underline;
+        }
+        
+        /* Code elements */
+        code {
+            background: #1e293b;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            color: #f1f5f9;
+        }
+        
+        pre {
+            background: #1e293b;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            border: 1px solid #475569;
+        }
+        
+        /* Form elements */
+        label {
+            color: #f1f5f9;
+            font-weight: 500;
+        }
+        
+        /* Lists */
+        ul, ol {
+            color: #e2e8f0;
+        }
+        
+        /* Blockquotes */
+        blockquote {
+            border-left: 4px solid #475569;
+            padding-left: 16px;
+            margin-left: 0;
+            color: #cbd5e1;
+            font-style: italic;
         }
     </style>
 </head>
@@ -412,14 +492,15 @@ export class WebExecutionEngine implements ExecutionEngine {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CSS Live Preview</title>
     <style>
-        /* Reset and base styles */
+        /* Reset and base styles with dark mode */
         * { box-sizing: border-box; }
         body { 
             margin: 0; 
             padding: 20px; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
-            background: #ffffff;
+            background: #0f172a;
+            color: #e2e8f0;
         }
         
         /* User's CSS */

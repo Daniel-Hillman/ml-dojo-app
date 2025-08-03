@@ -14,8 +14,29 @@ import {
   ArrowRight,
   Zap
 } from 'lucide-react';
-import { TemplateBrowser } from '@/components/TemplateBrowser';
-import { LiveCodeBlock } from '@/components/LiveCodeBlock';
+import dynamic from 'next/dynamic';
+
+// Lazy load heavy components
+const TemplateBrowser = dynamic(() => import('@/components/TemplateBrowser'), {
+  loading: () => (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    </div>
+  ),
+  ssr: false
+});
+
+const LiveCodeBlock = dynamic(() => import('@/components/LiveCodeBlock').then(mod => ({ default: mod.LiveCodeBlock })), {
+  loading: () => (
+    <div className="flex items-center justify-center h-96 border rounded-lg">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Loading code editor...</p>
+      </div>
+    </div>
+  ),
+  ssr: false
+});
 import { 
   CodeTemplate, 
   SupportedLanguage,
@@ -112,7 +133,7 @@ export default function LearnPage() {
             <Button 
               variant="outline"
               size="sm"
-              className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 text-blue-700 hover:from-blue-100 hover:to-purple-100"
+              className="bg-card border hover:bg-accent/50 transition-colors"
             >
               <Play className="w-4 h-4 mr-2" />
               Try Live Code

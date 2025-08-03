@@ -27,6 +27,44 @@
     --ring: 216 34% 92%;
     --radius: 0.5rem;
   }
+
+  /* Improved scrollbar styling to prevent flickering */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted)) hsl(var(--background));
+  }
+
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+    border-radius: 4px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: 4px;
+    border: 1px solid hsl(var(--background));
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: hsl(var(--background));
+  }
+
+  /* Prevent layout shifts that cause scrollbar flickering */
+  .code-container,
+  .syntax-highlighted-editor,
+  .cm-editor {
+    overflow: auto;
+    scrollbar-gutter: stable;
+  }
 }
 
 @layer base {

@@ -217,9 +217,9 @@ if hasattr(${varName}, '__len__'):
         {isExpanded && (
           <CardContent className="pt-0">
             <div className="space-y-3">
-              <div className="bg-gray-50 rounded-lg p-3">
+              <div className="bg-muted rounded-lg p-3">
                 <h4 className="font-medium text-sm mb-2">Value Preview</h4>
-                <pre className="text-xs font-mono bg-white p-2 rounded border overflow-x-auto">
+                <pre className="text-xs font-mono bg-card p-2 rounded border overflow-x-auto">
                   {variable.preview || variable.value}
                 </pre>
               </div>

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { CheckCircle, XCircle, AlertCircle, Edit3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { debounce } from 'lodash';
+import { debounce } from '@/lib/debounce';
 import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
 import { vscodeDark } from '@uiw/codemirror-theme-vscode';

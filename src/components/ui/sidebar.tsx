@@ -16,7 +16,7 @@ export function Sidebar() {
   const isMobile = useMobile();
 
   const navLinks = [
-    { href: '/playground', icon: Play, label: 'Code Playground', featured: true },
+    { href: '/playground', icon: Play, label: 'Code Playground' },
     { href: '/drills', icon: FlaskConical, label: 'Practice Drills' },
     { href: '/drills/create', icon: PlusSquare, label: 'Custom Drills' },
     { href: '/learn', icon: BookOpen, label: 'Code Examples' },
@@ -33,18 +33,16 @@ export function Sidebar() {
     return (
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur-sm">
         <div className="flex justify-around py-1">
-          {[...navLinks.slice(0, 4), ...footerLinks.slice(0, 2)].map(({ href, icon: Icon, label, featured }) => (
+          {[...navLinks.slice(0, 4), ...footerLinks.slice(0, 2)].map(({ href, icon: Icon, label }) => (
             <Link key={label} href={href} className="flex-1">
               <div
                 className={cn(
                   'flex flex-col items-center gap-1 p-2 transition-colors rounded-md',
-                   pathname.startsWith(href) ? 'bg-primary/10 text-primary' : 'text-muted-foreground',
-                   featured && 'bg-blue-50 text-blue-700'
+                   pathname.startsWith(href) ? 'bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400' : 'text-muted-foreground hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/20'
                 )}
               >
                 <Icon className="h-5 w-5" />
                 <span className="text-xs font-medium font-code7x5">{label.split(' ')[0]}</span>
-                {featured && <div className="w-1 h-1 bg-blue-500 rounded-full"></div>}
               </div>
             </Link>
           ))}
@@ -67,23 +65,17 @@ export function Sidebar() {
           </div>
           
           <nav className="grid items-start gap-1 px-4 text-sm font-medium">
-            {navLinks.map(({ href, icon: Icon, label, featured }) => (
+            {navLinks.map(({ href, icon: Icon, label }) => (
               <Link
                 key={label}
                 href={href}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-3 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10 font-code7x5',
-                  pathname.startsWith(href) && 'bg-primary/10 text-primary',
-                  featured && 'bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 text-blue-700 hover:from-blue-100 hover:to-purple-100'
+                  'flex items-center gap-3 rounded-lg px-3 py-3 text-muted-foreground transition-all hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/20 font-code7x5',
+                  pathname.startsWith(href) && 'bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400'
                 )}
               >
                 <Icon className="h-5 w-5" />
                 {label}
-                {featured && (
-                  <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                    New
-                  </span>
-                )}
               </Link>
             ))}
           </nav>
@@ -107,8 +99,8 @@ export function Sidebar() {
                     key={label}
                     href={href}
                     className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-3 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10 font-code7x5',
-                      pathname.startsWith(href) && 'bg-primary/10 text-primary'
+                      'flex items-center gap-3 rounded-lg px-3 py-3 text-muted-foreground transition-all hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/20 font-code7x5',
+                      pathname.startsWith(href) && 'bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400'
                     )}
                   >
                     <Icon className="h-5 w-5" />

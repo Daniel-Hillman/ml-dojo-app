@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { SyntaxHighlightedEditor } from '@/components/SyntaxHighlightedEditor';
 
 // Debounce utility function
 function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
@@ -436,7 +437,7 @@ export const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
               {/* Package suggestions */}
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="flex items-center gap-2 bg-card border hover:bg-accent/50 transition-colors">
                     <Plus className="w-4 h-4" />
                     Import Package
                     <ChevronDown className="w-3 h-3" />
@@ -459,7 +460,7 @@ export const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
                                 key={idx}
                                 variant="ghost"
                                 size="sm"
-                                className="w-full justify-start text-xs font-mono"
+                                className="w-full justify-start text-xs font-mono hover:bg-accent/50 transition-colors"
                                 onClick={() => insertImport(key, imp)}
                               >
                                 {imp}
@@ -476,7 +477,7 @@ export const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
               {/* Sample datasets */}
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="flex items-center gap-2 bg-card border hover:bg-accent/50 transition-colors">
                     <Database className="w-4 h-4" />
                     Sample Data
                     <ChevronDown className="w-3 h-3" />
@@ -495,7 +496,7 @@ export const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
                           <Button
                             variant="outline"
                             size="sm"
-                            className="w-full"
+                            className="w-full bg-card border hover:bg-accent/50 transition-colors"
                             onClick={() => insertCode(dataset.code)}
                           >
                             Insert Dataset Code
@@ -510,7 +511,7 @@ export const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
               {/* Code templates */}
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="flex items-center gap-2 bg-card border hover:bg-accent/50 transition-colors">
                     <FileText className="w-4 h-4" />
                     Templates
                     <ChevronDown className="w-3 h-3" />
@@ -529,7 +530,7 @@ export const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
                           <Button
                             variant="outline"
                             size="sm"
-                            className="w-full"
+                            className="w-full bg-card border hover:bg-accent/50 transition-colors"
                             onClick={() => insertCode(template.code)}
                           >
                             Insert Template
@@ -546,13 +547,14 @@ export const PythonCodeEditor: React.FC<PythonCodeEditorProps> = ({
 
         <CardContent className="p-0">
           <div className="relative">
-            <textarea
-              ref={textareaRef}
-              value={code}
-              onChange={(e) => handleCodeChange(e.target.value)}
-              className="w-full p-4 font-mono text-sm bg-gray-900 text-gray-100 border-none outline-none resize-none"
-              style={{ height }}
-              placeholder="# Enter Python code here...
+            <div className="syntax-highlighted-python-editor" style={{ height }}>
+              <SyntaxHighlightedEditor
+                value={code}
+                onChange={handleCodeChange}
+                language="python"
+                height={height}
+                theme="dark"
+                placeholder="# Enter Python code here...
 # Use the buttons above to insert imports, sample data, or templates
 
 import numpy as np
@@ -560,13 +562,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Your code here..."
-              spellCheck={false}
-            />
+                className="w-full h-full"
+              />
+            </div>
             
             {/* Inline suggestions */}
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute top-16 left-4 bg-white border rounded-lg shadow-lg z-10 max-w-xs">
-                <div className="p-2 border-b bg-gray-50">
+              <div className="absolute top-16 left-4 bg-card border rounded-lg shadow-lg z-10 max-w-xs">
+                <div className="p-2 border-b bg-muted/50">
                   <div className="flex items-center gap-2">
                     <Lightbulb className="w-4 h-4 text-yellow-500" />
                     <span className="text-sm font-medium">Import Suggestions</span>
@@ -592,7 +595,7 @@ import matplotlib.pyplot as plt
                             key={idx}
                             variant="ghost"
                             size="sm"
-                            className="w-full justify-start text-xs font-mono p-1 h-auto"
+                            className="w-full justify-start text-xs font-mono p-1 h-auto hover:bg-accent/50 transition-colors"
                             onClick={() => insertImport(pkg, imp)}
                           >
                             {imp}

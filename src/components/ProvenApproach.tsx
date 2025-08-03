@@ -5,8 +5,21 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { debounce } from 'lodash';
-import CodeMirror from '@uiw/react-codemirror';
+import { debounce } from '@/lib/debounce';
+import dynamic from 'next/dynamic';
+
+// Lazy load CodeMirror for better performance
+const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
+  loading: () => (
+    <div className="flex items-center justify-center h-32 bg-muted/50 border rounded-lg">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
+        <p className="text-xs text-muted-foreground">Loading editor...</p>
+      </div>
+    </div>
+  ),
+  ssr: false
+});
 import { python } from '@codemirror/lang-python';
 import { javascript } from '@codemirror/lang-javascript';
 import { html } from '@codemirror/lang-html';
@@ -67,16 +80,55 @@ export function ProvenApproach({
         animation: input-glow 3s ease-in-out infinite;
       }
       
-      /* Ensure syntax highlighting is visible */
+      /* Match playground code block styling */
       .syntax-highlighted-code .cm-editor {
         background-color: #1e1e1e !important;
+        border-radius: 6px;
+        overflow: hidden;
       }
       
       .syntax-highlighted-code .cm-content {
         color: #d4d4d4 !important;
+        padding: 16px;
+        font-size: 14px;
+        font-family: 'JetBrains Mono', Consolas, Monaco, 'Courier New', monospace;
       }
       
-      /* Preserve VS Code syntax highlighting colors */
+      .syntax-highlighted-code .cm-focused {
+        outline: none;
+      }
+      
+      .syntax-highlighted-code .cm-scroller {
+        font-family: 'JetBrains Mono', Consolas, Monaco, 'Courier New', monospace;
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e0 #f7fafc;
+        scrollbar-gutter: stable;
+      }
+      
+      .syntax-highlighted-code .cm-scroller::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      
+      .syntax-highlighted-code .cm-scroller::-webkit-scrollbar-track {
+        background: #f7fafc;
+        border-radius: 4px;
+      }
+      
+      .syntax-highlighted-code .cm-scroller::-webkit-scrollbar-thumb {
+        background: #cbd5e0;
+        border-radius: 4px;
+      }
+      
+      .syntax-highlighted-code .cm-scroller::-webkit-scrollbar-thumb:hover {
+        background: #a0aec0;
+      }
+      
+      .syntax-highlighted-code .cm-scroller::-webkit-scrollbar-corner {
+        background: #f7fafc;
+      }
+      
+      /* Preserve VS Code syntax highlighting colors to match playground */
       .syntax-highlighted-code .cm-keyword { color: #569cd6 !important; }
       .syntax-highlighted-code .cm-string { color: #ce9178 !important; }
       .syntax-highlighted-code .cm-comment { color: #6a9955 !important; }
@@ -452,15 +504,30 @@ export function ProvenApproach({
           extensions={[
             getLanguageExtension(),
             EditorView.theme({
+              '&': {
+                fontSize: '14px',
+                fontFamily: 'JetBrains Mono, Consolas, Monaco, "Courier New", monospace'
+              },
               '.cm-content': {
                 padding: '16px',
                 fontSize: '14px',
                 lineHeight: '1.6',
-                fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
+                fontFamily: 'JetBrains Mono, Consolas, Monaco, "Courier New", monospace',
                 minHeight: '100px'
               },
+              '.cm-focused': {
+                outline: 'none'
+              },
               '.cm-editor': {
-                backgroundColor: '#1e1e1e !important'
+                backgroundColor: '#1e1e1e !important',
+                borderRadius: '6px',
+                overflow: 'hidden'
+              },
+              '.cm-scroller': {
+                fontFamily: 'inherit',
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#cbd5e0 #f7fafc',
+                scrollbarGutter: 'stable'
               }
             })
           ]}
@@ -522,21 +589,30 @@ export function ProvenApproach({
             extensions={[
               getLanguageExtension(),
               EditorView.theme({
+                '&': {
+                  fontSize: '14px',
+                  fontFamily: 'JetBrains Mono, Consolas, Monaco, "Courier New", monospace'
+                },
                 '.cm-content': {
                   padding: '16px',
                   fontSize: '14px',
                   lineHeight: '1.6',
-                  fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
+                  fontFamily: 'JetBrains Mono, Consolas, Monaco, "Courier New", monospace',
                   minHeight: '100px'
                 },
                 '.cm-focused': {
                   outline: 'none'
                 },
                 '.cm-editor': {
-                  backgroundColor: '#1e1e1e !important'
+                  backgroundColor: '#1e1e1e !important',
+                  borderRadius: '6px',
+                  overflow: 'hidden'
                 },
                 '.cm-scroller': {
-                  fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
+                  fontFamily: 'inherit',
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#cbd5e0 #f7fafc',
+                  scrollbarGutter: 'stable'
                 },
                 '&.cm-editor.cm-focused': {
                   outline: 'none'
@@ -572,18 +648,26 @@ export function ProvenApproach({
           
           <div className="flex items-center space-x-2">
             <Button
-              onClick={() => navigateToBlank(Math.max(0, currentBlankIndex - 1))}
-              disabled={currentBlankIndex === 0}
+              onClick={() => {
+                // Loop to last blank if at the beginning
+                const prevIndex = currentBlankIndex === 0 ? blanks.length - 1 : currentBlankIndex - 1;
+                navigateToBlank(prevIndex);
+              }}
               variant="outline"
               size="sm"
+              title="Previous blank (Shift+Tab or ↑)"
             >
               ← Previous
             </Button>
             <Button
-              onClick={() => navigateToBlank(Math.min(blanks.length - 1, currentBlankIndex + 1))}
-              disabled={currentBlankIndex === blanks.length - 1}
+              onClick={() => {
+                // Loop to first blank if at the end
+                const nextIndex = currentBlankIndex === blanks.length - 1 ? 0 : currentBlankIndex + 1;
+                navigateToBlank(nextIndex);
+              }}
               variant="outline"
               size="sm"
+              title="Next blank (Tab, Enter, or ↓)"
             >
               Next →
             </Button>
@@ -599,9 +683,15 @@ export function ProvenApproach({
               
               return (
                 <div className="space-y-3">
-                  <label className="block text-lg font-medium text-gray-200">
-                    What should go in blank {blankIndex + 1}?
-                  </label>
+                  <div className="space-y-2">
+                    <label className="block text-lg font-medium text-gray-200">
+                      What should go in blank {blankIndex + 1}?
+                    </label>
+                    <div className="text-xs text-gray-400 flex items-center gap-4">
+                      <span>💡 Navigation: Tab/↓ (next) • Shift+Tab/↑ (previous) • Enter (next)</span>
+                      <span className="text-blue-400">Loops automatically!</span>
+                    </div>
+                  </div>
                   
                   <div className="flex items-center space-x-3">
                     <Input
@@ -614,10 +704,29 @@ export function ProvenApproach({
                       onKeyDown={(e) => {
                         if (e.key === 'Tab' && !e.shiftKey) {
                           e.preventDefault();
-                          navigateToBlank(Math.min(blanks.length - 1, currentBlankIndex + 1));
+                          // Loop to first blank if at the end
+                          const nextIndex = currentBlankIndex === blanks.length - 1 ? 0 : currentBlankIndex + 1;
+                          navigateToBlank(nextIndex);
                         } else if (e.key === 'Tab' && e.shiftKey) {
                           e.preventDefault();
-                          navigateToBlank(Math.max(0, currentBlankIndex - 1));
+                          // Loop to last blank if at the beginning
+                          const prevIndex = currentBlankIndex === 0 ? blanks.length - 1 : currentBlankIndex - 1;
+                          navigateToBlank(prevIndex);
+                        } else if (e.key === 'Enter') {
+                          e.preventDefault();
+                          // Move to next blank on Enter, loop to first if at end
+                          const nextIndex = currentBlankIndex === blanks.length - 1 ? 0 : currentBlankIndex + 1;
+                          navigateToBlank(nextIndex);
+                        } else if (e.key === 'ArrowDown') {
+                          e.preventDefault();
+                          // Move to next blank with arrow down, loop to first if at end
+                          const nextIndex = currentBlankIndex === blanks.length - 1 ? 0 : currentBlankIndex + 1;
+                          navigateToBlank(nextIndex);
+                        } else if (e.key === 'ArrowUp') {
+                          e.preventDefault();
+                          // Move to previous blank with arrow up, loop to last if at beginning
+                          const prevIndex = currentBlankIndex === 0 ? blanks.length - 1 : currentBlankIndex - 1;
+                          navigateToBlank(prevIndex);
                         }
                       }}
                     />

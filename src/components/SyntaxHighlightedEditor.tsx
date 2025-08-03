@@ -135,10 +135,31 @@ export const SyntaxHighlightedEditor: React.FC<SyntaxHighlightedEditorProps> = (
           outline: 'none'
         },
         '.cm-editor': {
-          borderRadius: '6px'
+          borderRadius: '6px',
+          overflow: 'hidden' // Prevent layout shifts
         },
         '.cm-scroller': {
-          fontFamily: 'inherit'
+          fontFamily: 'inherit',
+          scrollbarWidth: 'thin', // Firefox
+          scrollbarColor: '#cbd5e0 #f7fafc', // Firefox
+          '&::-webkit-scrollbar': {
+            width: '8px',
+            height: '8px'
+          },
+          '&::-webkit-scrollbar-track': {
+            background: '#f7fafc',
+            borderRadius: '4px'
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: '#cbd5e0',
+            borderRadius: '4px',
+            '&:hover': {
+              background: '#a0aec0'
+            }
+          },
+          '&::-webkit-scrollbar-corner': {
+            background: '#f7fafc'
+          }
         }
       })
       ];

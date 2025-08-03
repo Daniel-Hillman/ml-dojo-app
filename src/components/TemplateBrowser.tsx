@@ -100,10 +100,10 @@ export const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'beginner': return 'bg-green-100 text-green-800';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'advanced': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'beginner': return 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20';
+      case 'intermediate': return 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20';
+      case 'advanced': return 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20';
+      default: return 'bg-muted text-muted-foreground border-border';
     }
   };
 
@@ -122,7 +122,7 @@ export const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
       <div className="space-y-4">
         {/* Compact Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
             placeholder="Search templates..."
             value={searchQuery}
@@ -136,7 +136,7 @@ export const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
           {filteredTemplates.map((template) => (
             <div
               key={template.id}
-              className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
+              className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 cursor-pointer transition-colors"
               onClick={() => handleTemplateSelect(template)}
             >
               <div className="flex-1 min-w-0">
@@ -147,7 +147,7 @@ export const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
                     {template.difficulty}
                   </Badge>
                 </div>
-                <p className="text-xs text-gray-600 truncate mt-1">{template.description}</p>
+                <p className="text-xs text-muted-foreground truncate mt-1">{template.description}</p>
               </div>
               <Button variant="ghost" size="sm" onClick={(e) => {
                 e.stopPropagation();
@@ -168,7 +168,7 @@ export const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Code Templates</h2>
-          <p className="text-gray-600">Browse and use pre-built code examples</p>
+          <p className="text-muted-foreground">Browse and use pre-built code examples</p>
         </div>
         <Badge variant="outline" className="text-sm">
           {filteredTemplates.length} templates
@@ -179,7 +179,7 @@ export const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
       <div className="space-y-4">
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
           <Input
             placeholder="Search templates by name, description, or tags..."
             value={searchQuery}
@@ -192,11 +192,11 @@ export const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
         <div className="flex flex-wrap gap-4">
           {showLanguageFilter && (
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-500" />
+              <Filter className="w-4 h-4 text-muted-foreground" />
               <select
                 value={selectedLanguage}
                 onChange={(e) => setSelectedLanguage(e.target.value as SupportedLanguage | 'all')}
-                className="border rounded px-3 py-1 text-sm"
+                className="border border-border bg-background rounded px-3 py-1 text-sm"
               >
                 <option value="all">All Languages</option>
                 {Object.entries(languageStats).map(([lang, count]) => (
@@ -211,7 +211,7 @@ export const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="border rounded px-3 py-1 text-sm"
+            className="border border-border bg-background rounded px-3 py-1 text-sm"
           >
             <option value="all">All Categories</option>
             <option value="starter">Starter</option>
@@ -223,7 +223,7 @@ export const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
           <select
             value={selectedDifficulty}
             onChange={(e) => setSelectedDifficulty(e.target.value)}
-            className="border rounded px-3 py-1 text-sm"
+            className="border border-border bg-background rounded px-3 py-1 text-sm"
           >
             <option value="all">All Levels</option>
             <option value="beginner">Beginner</option>
@@ -247,7 +247,7 @@ export const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
                   {template.difficulty}
                 </Badge>
               </div>
-              <p className="text-sm text-gray-600 mt-2">{template.description}</p>
+              <p className="text-sm text-muted-foreground mt-2">{template.description}</p>
             </CardHeader>
             
             <CardContent className="pt-0">
@@ -266,8 +266,8 @@ export const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
               </div>
 
               {/* Code Preview */}
-              <div className="bg-gray-50 rounded p-3 mb-4">
-                <pre className="text-xs text-gray-700 overflow-hidden">
+              <div className="bg-muted/50 border rounded p-3 mb-4">
+                <pre className="text-xs text-foreground overflow-hidden">
                   <code>{template.code.slice(0, 150)}...</code>
                 </pre>
               </div>
@@ -306,9 +306,9 @@ export const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
       {/* Empty State */}
       {filteredTemplates.length === 0 && (
         <div className="text-center py-12">
-          <Code className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No templates found</h3>
-          <p className="text-gray-600 mb-4">
+          <Code className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No templates found</h3>
+          <p className="text-muted-foreground mb-4">
             Try adjusting your search or filters to find more templates.
           </p>
           <Button variant="outline" onClick={() => {

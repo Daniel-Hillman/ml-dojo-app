@@ -205,7 +205,7 @@ export const LiveCodeBlock: React.FC<LiveCodeBlockProps> = ({
         clonedIframe.style.height = '100%';
         clonedIframe.style.border = 'none';
         clonedIframe.style.borderRadius = '4px';
-        clonedIframe.style.background = 'white';
+        clonedIframe.style.background = 'hsl(var(--card))';
         
         // Copy the content from original iframe
         try {
@@ -236,7 +236,7 @@ export const LiveCodeBlock: React.FC<LiveCodeBlockProps> = ({
       iframe.style.height = '100%';
       iframe.style.border = 'none';
       iframe.style.borderRadius = '4px';
-      iframe.style.background = 'white';
+      iframe.style.background = 'hsl(var(--card))';
       iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
       
       iframe.onload = () => {
@@ -481,7 +481,7 @@ export const LiveCodeBlock: React.FC<LiveCodeBlockProps> = ({
           <div className={`grid ${showOutput ? 'grid-cols-2' : 'grid-cols-1'} h-full`}>
             {/* Code Editor */}
             <div className="border-r">
-              <div className="relative" style={{ height }}>
+              <div className="relative code-container" style={{ height }}>
                 {allowEdit ? (
                   <ClientOnlySyntaxHighlightedEditor
                     value={code}
@@ -491,7 +491,7 @@ export const LiveCodeBlock: React.FC<LiveCodeBlockProps> = ({
                     theme="dark"
                     placeholder={`Enter ${languageConfig.name} code here...`}
                     onExecute={executeCode}
-                    className="w-full h-full"
+                    className="w-full h-full syntax-highlighted-editor"
                   />
                 ) : (
                   <SyntaxHighlighter
@@ -502,7 +502,8 @@ export const LiveCodeBlock: React.FC<LiveCodeBlockProps> = ({
                       padding: '16px',
                       fontSize: '14px',
                       height: '100%',
-                      overflow: 'auto'
+                      overflow: 'auto',
+                      scrollbarGutter: 'stable'
                     }}
                   >
                     {code}
@@ -521,7 +522,7 @@ export const LiveCodeBlock: React.FC<LiveCodeBlockProps> = ({
                     <TabsTrigger value="errors">Errors</TabsTrigger>
                   </TabsList>
                   
-                  <TabsContent value="console" className="flex-1 p-4 overflow-auto">
+                  <TabsContent value="console" className="flex-1 p-4 overflow-auto" style={{ scrollbarGutter: 'stable' }}>
                     <div ref={outputRef} className="font-mono text-sm whitespace-pre-wrap">
                       {executionResult?.output || 'No output yet. Run your code to see results.'}
                     </div>
@@ -530,18 +531,30 @@ export const LiveCodeBlock: React.FC<LiveCodeBlockProps> = ({
                   <TabsContent value="preview" className="flex-1 p-0">
                     <div 
                       ref={iframeContainerRef} 
-                      className="w-full h-full bg-white rounded-md"
+                      className="w-full h-full bg-slate-900 rounded-md relative"
                       style={{ minHeight: '300px' }}
                     >
-                      {!executionResult?.visualOutput && (
+                      {executionResult?.visualOutput ? (
+                        <iframe
+                          srcDoc={executionResult.visualOutput}
+                          className="w-full h-full border-0 rounded-md"
+                          style={{ minHeight: '300px' }}
+                          sandbox="allow-scripts allow-forms allow-modals allow-popups allow-same-origin"
+                          title="Code Preview"
+                        />
+                      ) : (
                         <div className="flex items-center justify-center h-full text-muted-foreground">
-                          No preview available. Run your code to see visual output.
+                          <div className="text-center">
+                            <div className="text-lg mb-2">🖼️</div>
+                            <p>No preview available</p>
+                            <p className="text-sm">Run HTML, CSS, or JavaScript code to see visual output</p>
+                          </div>
                         </div>
                       )}
                     </div>
                   </TabsContent>
                   
-                  <TabsContent value="errors" className="flex-1 p-4 overflow-auto">
+                  <TabsContent value="errors" className="flex-1 p-4 overflow-auto" style={{ scrollbarGutter: 'stable' }}>
                     <div className="font-mono text-sm text-red-600">
                       {executionResult?.error || 'No errors.'}
                     </div>

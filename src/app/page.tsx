@@ -18,6 +18,7 @@ import {
 import { LiveCodeBlock } from '@/components/LiveCodeBlock';
 import { SSRSafe } from '@/components/SSRSafe';
 import { HydrationErrorBoundary } from '@/components/error/HydrationErrorBoundary';
+import FaultyTerminal from '@/components/FaultyTerminal';
 
 const FEATURED_EXAMPLES = [
   {
@@ -228,21 +229,50 @@ print("\\n🎯 Try modifying the data or adding new analysis!")`,
 export default function HomePage() {
   return (
     <HydrationErrorBoundary>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50" suppressHydrationWarning>
+      <div className="relative min-h-screen overflow-hidden" suppressHydrationWarning>
+        {/* Terminal Background Effect */}
+        <div className="absolute inset-0 z-0">
+          <FaultyTerminal
+            scale={0.8}
+            gridMul={[2, 1]}
+            digitSize={1.0}
+            timeScale={0.3}
+            pause={false}
+            scanlineIntensity={0.4}
+            glitchAmount={0.8}
+            flickerAmount={0.3}
+            noiseAmp={0.4}
+            chromaticAberration={1}
+            dither={0.2}
+            curvature={0.05}
+            tint="#00ff41"
+            mouseReact={false}
+            brightness={0.2}
+            className="w-full h-full opacity-30"
+          />
+        </div>
+
+        {/* Dark overlay for better readability */}
+        <div className="absolute inset-0 bg-background/95 z-10" />
+
+        {/* Content */}
+        <div className="relative z-20 min-h-screen bg-gradient-to-br from-background/50 via-background/80 to-background/50">
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="container mx-auto px-6 py-16">
           <div className="text-center max-w-4xl mx-auto">
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl">
-                <Code className="w-8 h-8 text-white" />
-              </div>
-              <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            {/* OmniCode Logo - Premium Styling */}
+            <div className="mb-8">
+              <h1 className="text-8xl font-aurora text-green-400 tracking-wider mb-4 drop-shadow-2xl">
                 OmniCode
               </h1>
+              <div className="h-1 w-64 bg-gradient-to-r from-transparent via-green-400 to-transparent mx-auto mb-4"></div>
+              <p className="text-green-300/80 font-mono text-lg">
+                Full Stack AI Training Environment
+              </p>
             </div>
             
-            <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+            <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
               Learn to code interactively with live execution, practice drills, and a supportive community. 
               Master programming languages through hands-on experience.
             </p>
@@ -266,13 +296,13 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 bg-white/50">
+      <section className="py-16 bg-card/30 backdrop-blur-sm">
         <div className="container mx-auto px-6">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-foreground mb-4">
               Why Choose OmniCode?
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Everything you need to learn programming effectively in one place
             </p>
           </div>
@@ -312,7 +342,7 @@ export default function HomePage() {
                   <CardTitle className="text-xl">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-600">{feature.description}</p>
+                  <p className="text-muted-foreground">{feature.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -326,12 +356,12 @@ export default function HomePage() {
           <div className="text-center mb-12">
             <div className="flex items-center justify-center gap-2 mb-4">
               <Sparkles className="w-6 h-6 text-yellow-500" />
-              <h2 className="text-3xl font-bold text-gray-900">
+              <h2 className="text-3xl font-bold text-foreground">
                 Featured Code Examples
               </h2>
               <Sparkles className="w-6 h-6 text-yellow-500" />
             </div>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Try these interactive examples to see OmniCode in action
             </p>
           </div>
@@ -346,7 +376,7 @@ export default function HomePage() {
                       {example.difficulty}
                     </Badge>
                   </div>
-                  <p className="text-sm text-gray-600">{example.description}</p>
+                  <p className="text-sm text-muted-foreground">{example.description}</p>
                   <div className="flex flex-wrap gap-1 mt-2">
                     {example.tags.map((tag) => (
                       <Badge key={tag} variant="secondary" className="text-xs">
@@ -358,10 +388,10 @@ export default function HomePage() {
                 <CardContent className="flex-1">
                   <HydrationErrorBoundary>
                     <SSRSafe fallback={
-                      <div className="h-[300px] bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
+                      <div className="h-[300px] bg-muted rounded-lg flex items-center justify-center">
                         <div className="text-center">
-                          <Code className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                          <p className="text-sm text-gray-500">Loading code editor...</p>
+                          <Code className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                          <p className="text-sm text-muted-foreground">Loading code editor...</p>
                         </div>
                       </div>
                     }>
@@ -416,6 +446,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+        </div>
       </div>
     </HydrationErrorBoundary>
   );
